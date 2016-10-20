@@ -1,5 +1,7 @@
 #project specific
 db.sqlite3
+mission_mapping/migrations/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

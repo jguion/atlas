@@ -21,15 +21,6 @@ class User(models.Model):
         choices=ROLES
     )
 
-class Mission(models.Model):
-    name = models.CharField(max_length=200)
-    description = models.CharField(max_length=400)
-    organization = models.Organization()
-    poc = models.POC()
-    start_time = models.DateTimeField('start time')
-    end_time = models.DateTimeField('end time')
-    #cyber terrain
-
 class Organization(models.Model):
     name = models.CharField(max_length=200)
 
@@ -38,14 +29,29 @@ class POC(models.Model):
     phone_number = models.CharField(max_length=200)
     email_address = models.CharField(max_length=200)
 
+class Mission(models.Model):
+    name = models.CharField(max_length=200)
+    description = models.CharField(max_length=400)
+    organization = Organization()
+    poc = POC()
+    start_time = models.DateTimeField('start time')
+    end_time = models.DateTimeField('end time')
+    #cyber terrain
+
 class ServiceInterruption(models.Model):
     name = models.CharField(max_length=200)
     description = models.CharField(max_length=400)
-    organization = models.Organization()
-    poc = models.POC()
+    organization = Organization()
+    poc = POC()
     start_time = models.DateTimeField('start time')
     end_time = models.DateTimeField('end time')
-    scheduled = models.BooleanField(default=true)
+    scheduled = models.BooleanField(default=True)
+    #affected_systems = models.ManyToManyField(System)
+    #affected_devices = models.ManyToManyField(NetworkDevice)
+    #cyber terrain
+
+#class InterruptionAffectedSystems
+#    ASI =
 
 #Cyber terrain
 # - consists of devices, systems, has status, %operational,
