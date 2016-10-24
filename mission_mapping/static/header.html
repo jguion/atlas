@@ -19,9 +19,12 @@
     } );
     </script>
     <style>
+    .header-menu {
+      display: inline-block;
+      float: left;
+      font-size: 1.3em;
+    }
     .ui-menu .ui-menu-item {
-        display: inline-block;
-        float: left;
         margin: 0;
         padding: 0;
         width: auto;
@@ -34,21 +37,27 @@
       line-height: 0;
       height: 0;
   }
+  .right{
+    float:right !important;
+  }
     </style>
   </head>
   <body>
     <ul id="menu">
-      <li>
+      <li class="header-menu">
         <div id="dashboard_link">Dashboard</div>
       </li>
-      <li>
+      <li class="header-menu">
         <div id="missions_link">Missions</div>
       </li>
-      <li>
+      <li class="header-menu">
         <div id="systems_link">Systems</div>
       </li>
-      <li>
+      <li class="header-menu">
         <div id="service_interruption_link">Service Interruptions</div>
+      </li>
+      <li class="right header-menu">
+        <div id="user_profile">My Profile</<div>
       </li>
     </ul>
   </body>

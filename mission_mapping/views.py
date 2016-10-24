@@ -20,4 +20,4 @@ def systems(request):
 
 def service_interruption(request):
     context = {}
-    return render(request, "service_interruption.html", context)
+    return render(request, "service_interruptions.html", context)

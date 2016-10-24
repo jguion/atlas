@@ -14,7 +14,7 @@
     $( function() {
       $( "#header" ).load("/static/header.html");
       $( "#tabs" ).tabs();
-      $( "#mission_selector" ).selectmenu();
+      $( "#asi_selector" ).selectmenu();
 
       //Create the tables
       google.charts.load('current', {'packages':['table']});
@@ -26,17 +26,18 @@
 
       function drawTable() {
         data = new google.visualization.DataTable();
-        data.addColumn('string', 'Mission');
+        data.addColumn('string', 'ID');
+        data.addColumn('string', 'Systems');
         data.addColumn('string', 'Organization')
         data.addColumn('datetime', 'Start Time');
         data.addColumn('datetime', 'End Time');
         data.addRows([
-          ['Take pictures', 'Intel', new Date(2016, 9, 30, 12, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
-          ['Drop bombs', 'Bombers',  new Date(2016, 9, 30, 14, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
-          ['Hack bad guys', '24 AF',  new Date(2016, 9, 30, 15, 00, 00), new Date(2016, 9, 30, 23, 00, 00)]
+          ['ASI2016-001','Intelink', '25 AF', new Date(2016, 9, 30, 12, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
+          ['ASI2016-002', 'Langley Gateway router', '83 NOS',  new Date(2016, 9, 30, 14, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
+          ['ASI2016-003', 'WP SharePoint', '24 AF',  new Date(2016, 9, 30, 15, 00, 00), new Date(2016, 9, 30, 23, 00, 00)]
         ]);
 
-        table = new google.visualization.Table(document.getElementById('current_mission_table'));
+        table = new google.visualization.Table(document.getElementById('current_asi_table'));
         options = {showRowNumber: true, width: '100%', height:'100%'}
         table.draw(data, options);
       }
@@ -47,7 +48,8 @@
 
       //what to do when you add mission
       function addMission(){
-        data.addRow([$('#name').val(),
+        data.addRow([$('#asi_id').val(),
+                     $('#systems').val(),
                      $('#organization').val(),
                      new Date($('#start')[0].valueAsNumber),
                      new Date($('#end')[0].valueAsNumber)
@@ -63,7 +65,7 @@
         width: 450,
         modal: true,
         buttons: {
-          "Add Mission": addMission,
+          "Add ASI": addMission,
           Cancel: function() {
             dialog.dialog( "close" );
           }
@@ -78,7 +80,7 @@
         addMission();
       });
 
-      $( "#add_mission_btn" ).button().on( "click", function() {
+      $( "#add_asi_btn" ).button().on( "click", function() {
         dialog.dialog( "open" );
       });
       // End add mission box
@@ -141,7 +143,7 @@
 
     </script>
     <style>
-    #add_mission_btn {
+    #add_asi_btn {
       float: right;
     }
     label, input { display:block; }
@@ -152,13 +154,13 @@
   <body>
     <div id="header"></div>
 
-    <div id="dialog-form" title="Add new mission">
+    <div id="dialog-form" title="Add new ASI">
     <form>
       <fieldset>
-        <label for="name">Name</label>
-        <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all">
-        <label for="type">Type</label>
-        <input type="text" name="type" id="type" value="" class="text ui-widget-content ui-corner-all">
+        <label for="asi_id">ID</label>
+        <input type="text" name="asi_id" id="asi_id" value="" class="text ui-widget-content ui-corner-all">
+        <label for="systems">Systems</label>
+        <input type="text" name="systems" id="systems" value="" class="text ui-widget-content ui-corner-all">
         <label for="organization">Organization</label>
         <input type="text" name="organization" id="organization" value="" class="text ui-widget-content ui-corner-all">
         <label for="start">Start time</label>
@@ -172,33 +174,34 @@
     </form>
   </div>
 
-    <h1>Missions</h1>
+    <h1>Service Interruptions</h1>
     <div id="tabs">
     <ul>
-      <li><a href="#tabs-1">Today's Missions</a></li>
-      <li><a id="tabs-2_link" href="#tabs-2">Upcoming Missions</a></li>
-      <li><a href="#tabs-3">Missions Map</a></li>
-      <button class="ui-button ui-widget ui-corner-all" id="add_mission_btn">Add Mission</button>
+      <li><a href="#tabs-1">Today's ASIs</a></li>
+      <li><a id="tabs-2_link" href="#tabs-2">Upcoming ASIs</a></li>
+      <li><a href="#tabs-3">ASI Map</a></li>
+      <button class="ui-button ui-widget ui-corner-all" id="add_asi_btn">Add ASI</button>
     </ul>
     <div id="tabs-1">
-      <div id="current_mission_table"></div>
+      <div id="current_asi_table"></div>
     </div>
     <div id="tabs-2">
       <div id='calendar'></div>
     </div>
     <div id="tabs-3">
-      <form action="#">
-        <fieldset>
-          <label for="mission_selector">Select a mission to view</label>
-          <select name="mission_selector" id="mission_selector">
-            <option selected="selected">Take pictures</option>
-            <option>Drop bombs</option>
-            <option>Hack bad guys</option>
-          </select>
-        </fieldset>
-      </form>
-      <p>Pretty picture of selected mission</p>
-      <p>Should depict mission and show which systems it depends on and their status.</p>
+    <form action="#">
+
+      <fieldset>
+        <label for="asi_selector">Select an ASI to view</label>
+        <select name="asi_selector" id="asi_selector">
+          <option selected="selected">ASI2016-001</option>
+          <option>ASI2016-002</option>
+          <option>ASI2016-003</option>
+        </select>
+      </fieldset>
+    </form>
+      <p>Pretty picture of the selected ASI</p>
+      <p>Should be able to view systems affected by ASI and their dependencies.</p>
     </div>
   </div>
   </body>
