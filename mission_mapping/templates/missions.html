@@ -11,6 +11,7 @@
     <script type="text/javascript" src="/static/charts/loader.js"></script>
 
     <script>
+    var data;
     $( function() {
       $( "#header" ).load("/static/header.html");
       $( "#tabs" ).tabs();
@@ -20,25 +21,60 @@
       google.charts.load('current', {'packages':['table']});
       google.charts.setOnLoadCallback(drawTable);
 
-      var data;
+      //var data;
       var table;
       var options;
 
+      function getColorFormatter(){
+        var formatter = new google.visualization.ColorFormat();
+        formatter.addRange(100, null, '#83d974', '#83d974');
+        formatter.addRange(65, 99, '#ffc946', '#ffc946');
+        formatter.addRange(0, 64, '#f18a72', '#f18a72');
+        return formatter;
+      }
+
+      function populateMissionDrill(r){
+        $('#m_id').text("ID : " + data.getValue(r, 1));
+        $('#m_status').text("Mission status percentage : " + data.getValue(r, 0));
+        $('#m_name').text("Mission name : " + data.getValue(r, 2));
+        $('#m_organization').text("Organization : " + data.getValue(r, 3));
+        $('#m_start').text("Start time : " + data.getValue(r, 4));
+        $('#m_end').text("End Time : " + data.getValue(r, 5));
+
+        $('#m_type').text('Mission type : ');
+        $('#m_systems').text('Systems: Show systems affected but show as a list of objects not text...');
+
+      }
+
       function drawTable() {
         data = new google.visualization.DataTable();
+        data.addColumn('number', 'Status');
+        data.addColumn('string', 'ID');
         data.addColumn('string', 'Mission');
         data.addColumn('string', 'Organization')
         data.addColumn('datetime', 'Start Time');
         data.addColumn('datetime', 'End Time');
         data.addRows([
-          ['Take pictures', 'Intel', new Date(2016, 9, 30, 12, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
-          ['Drop bombs', 'Bombers',  new Date(2016, 9, 30, 14, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
-          ['Hack bad guys', '24 AF',  new Date(2016, 9, 30, 15, 00, 00), new Date(2016, 9, 30, 23, 00, 00)]
+          [100, 'M1','Take pictures', 'Intel', new Date(2016, 9, 30, 12, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
+          [25, 'M2', 'Drop bombs', 'Bombers',  new Date(2016, 9, 30, 14, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
+          [75, 'M3', 'Hack bad guys', '24 AF',  new Date(2016, 9, 30, 15, 00, 00), new Date(2016, 9, 30, 23, 00, 00)]
         ]);
 
         table = new google.visualization.Table(document.getElementById('current_mission_table'));
-        options = {showRowNumber: true, width: '100%', height:'100%'}
+        options = {showRowNumber: false, width: '100%', height:'100%', allowHtml:true}
+
+        formatter = getColorFormatter();
+        formatter.format(data, 0);
+
         table.draw(data, options);
+
+        google.visualization.events.addListener(table, 'select', function(){
+          s = table.getSelection();
+          row = s[0].row;
+          populateMissionDrill(row);
+          $( "#mission_drill" ).dialog( "open" );
+        });
+
       }
 
       //End create table
@@ -47,11 +83,15 @@
 
       //what to do when you add mission
       function addMission(){
-        data.addRow([$('#name').val(),
+        data.addRow([100,
+                     $('#id').val(),
+                     $('#name').val(),
                      $('#organization').val(),
                      new Date($('#start')[0].valueAsNumber),
                      new Date($('#end')[0].valueAsNumber)
                    ]);
+        formatter = getColorFormatter();
+        formatter.format(data, 0);
         table.draw(data, options);
         dialog.dialog("close");
         return true;
@@ -62,6 +102,19 @@
         height: 550,
         width: 450,
         modal: true,
+        show: {
+          effect: "fade",
+          duration: 500
+        },
+        hide: {
+          effect: "fade",
+          duration: 500
+        },
+        position: {
+          my: "top",
+          at: "center",
+          of: $('#tabs')
+        },
         buttons: {
           "Add Mission": addMission,
           Cancel: function() {
@@ -82,6 +135,27 @@
         dialog.dialog( "open" );
       });
       // End add mission box
+
+      //Mission drills
+      $( "#mission_drill" ).dialog({
+      autoOpen: false,
+        show: {
+          effect: "fold",
+          duration: 600
+        },
+        hide: {
+          effect: "fold",
+          duration: 600
+        },
+        width: "50%",
+        position: {
+          my: "top",
+          at: "center",
+          of: $('#tabs')
+        }
+      });
+
+      //End mission drills
 
       //calendar
       $("#tabs-2_link").click(function(){
@@ -155,6 +229,8 @@
     <div id="dialog-form" title="Add new mission">
     <form>
       <fieldset>
+        <label for="id">ID</label>
+        <input type="text" name="id" id="id" value="" class="text ui-widget-content ui-corner-all">
         <label for="name">Name</label>
         <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all">
         <label for="type">Type</label>
@@ -165,12 +241,44 @@
         <input type="datetime-local" name="start" id="start" value="" class="text ui-widget-content ui-corner-all">
         <label for="end">End time</label>
         <input type="datetime-local" name="end" id="end" value="" class="text ui-widget-content ui-corner-all">
-
         <!-- Allow form submission with keyboard without duplicating the dialog button -->
         <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
       </fieldset>
     </form>
   </div>
+
+  <div id="mission_drill" title="Mission details">
+    <div id="m_id"></div>
+    <div id="m_status"></div>
+    <div id="m_name"></div>
+    <div id="m_type"></div>
+    <div id="m_organization"></div>
+    <div id="m_start"> </div>
+    <div id="m_end"> </div>
+    <div id="m_systems"> </div>
+
+    <!--<form>
+      <fieldset>
+        <label for="m_id">ID</label>
+        <input type="text" name="m_id" id="m_id" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_status">Current Status</label>
+        <input type="text" name="m_status" id="m_status" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_name">Name</label>
+        <input type="text" name="m_name" id="m_name" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_type">Type</label>
+        <input type="text" name="m_type" id="m_type" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_organization">Organization</label>
+        <input type="text" name="m_organization" id="m_organization" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_start">Start time</label>
+        <input type="datetime-local" name="m_start" id="m_start" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_end">End time</label>
+        <input type="datetime-local" name="m_end" id="m_end" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_systems">Systems Status</label>
+        <input type="textbox" name="m_systems" id="m_systems" value="" class="text ui-widget-content ui-corner-all">
+        <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+      </fieldset>
+    </form> -->
+</div>
 
     <h1>Missions</h1>
     <div id="tabs">
