@@ -6,19 +6,314 @@
     <link rel="stylesheet" href="/static/fullcalendar-3.0.1/fullcalendar.css" />
     <script type='text/javascript' src="/static/jquery-3.1.1.min.js"></script>
     <script type='text/javascript' src="/static/jquery-ui-1.12.1.custom/jquery-ui.js"></script>
-    <script type='text/javascript' src="/static/fullcalendar-3.0.1/lib/moment.min.js"></script>
+    <script type='text/javascript' src="/static/fullcalendar-3.0.1/moment.min.js"></script>
     <script type='text/javascript' src="/static/fullcalendar-3.0.1/fullcalendar.js"></script>
-    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript" src="/static/charts/loader.js"></script>
+
     <script>
+    var data;
     $( function() {
       $( "#header" ).load("/static/header.html");
-    } );
+      $( "#tabs" ).tabs();
+      $( "#mission_selector" ).selectmenu();
+
+      //Create the tables
+      google.charts.load('current', {'packages':['table']});
+      google.charts.setOnLoadCallback(drawTable);
+
+      //var data;
+      var table;
+      var options;
+
+      function getColorFormatter(){
+        var formatter = new google.visualization.ColorFormat();
+        formatter.addRange(100, null, '#83d974', '#83d974');
+        formatter.addRange(65, 99, '#ffc946', '#ffc946');
+        formatter.addRange(0, 64, '#f18a72', '#f18a72');
+        return formatter;
+      }
+
+      function populateMissionDrill(r){
+        $('#m_id').text("ID : " + data.getValue(r, 1));
+        $('#m_status').text("Mission status percentage : " + data.getValue(r, 0));
+        $('#m_name').text("Mission name : " + data.getValue(r, 2));
+        $('#m_organization').text("Organization : " + data.getValue(r, 3));
+        $('#m_start').text("Start time : " + data.getValue(r, 4));
+        $('#m_end').text("End Time : " + data.getValue(r, 5));
+
+        $('#m_type').text('Mission type : ');
+        $('#m_systems').html('<div id="systems_table"></div>');
+
+        sys_data = new google.visualization.DataTable();
+        sys_data.addColumn('number', 'Status')
+        sys_data.addColumn('string', 'System Name');
+
+        sys_data.addRows([
+          [85, "NIPR"],
+          [100, "ACAS"],
+          [25, "SharePoint"]
+        ])
+
+        sys_table = new google.visualization.Table(document.getElementById('systems_table'));
+        formatter = getColorFormatter();
+        formatter.format(sys_data, 0);
+        options = {showRowNumber: false,  allowHtml:true}
+
+        sys_table.draw(sys_data, options);
+
+      }
+
+      function drawTable() {
+        data = new google.visualization.DataTable();
+        data.addColumn('number', 'Status');
+        data.addColumn('string', 'ID');
+        data.addColumn('string', 'System name');
+        data.addColumn('string', 'Organization')
+        data.addRows([
+          [100, 'S1','Intelink', 'Intel'],
+          [25, 'S2', 'GCCS', 'PMO'],
+          [75, 'S3', 'NIPR', '24 AF']
+        ]);
+
+        table = new google.visualization.Table(document.getElementById('system_table'));
+        options = {showRowNumber: false, width: '100%', height:'100%', allowHtml:true}
+
+        formatter = getColorFormatter();
+        formatter.format(data, 0);
+
+        table.draw(data, options);
+
+        google.visualization.events.addListener(table, 'select', function(){
+          s = table.getSelection();
+          row = s[0].row;
+          populateMissionDrill(row);
+          $( "#mission_drill" ).dialog( "open" );
+        });
+
+      }
+
+      //End create table
+
+      //Create the add mission box
+
+      //what to do when you add mission
+      function addMission(){
+        data.addRow([100,
+                     $('#id').val(),
+                     $('#name').val(),
+                     $('#organization').val(),
+                     new Date($('#start')[0].valueAsNumber),
+                     new Date($('#end')[0].valueAsNumber)
+                   ]);
+        formatter = getColorFormatter();
+        formatter.format(data, 0);
+        table.draw(data, options);
+        dialog.dialog("close");
+        return true;
+      }
+
+      dialog = $( "#dialog-form" ).dialog({
+        autoOpen: false,
+        height: 650,
+        width: 450,
+        modal: true,
+        show: {
+          effect: "fade",
+          duration: 500
+        },
+        hide: {
+          effect: "fade",
+          duration: 500
+        },
+        position: {
+          my: "top",
+          at: "top",
+          of: window,
+        },
+        buttons: {
+          "Add Mission": addMission,
+          Cancel: function() {
+            dialog.dialog( "close" );
+          }
+        },
+        close: function() {
+          form[ 0 ].reset();
+        }
+      });
+
+      form = dialog.find( "form" ).on( "submit", function( event ) {
+        event.preventDefault();
+        addMission();
+      });
+
+      $( "#add_system_btn" ).button().on( "click", function() {
+        dialog.dialog( "open" );
+      });
+      // End add mission box
+
+      //Mission drills
+      $( "#mission_drill" ).dialog({
+      autoOpen: false,
+        show: {
+          effect: "fold",
+          duration: 600
+        },
+        hide: {
+          effect: "fold",
+          duration: 600
+        },
+        width: "50%",
+        position: {
+          my: "top",
+          at: "center",
+          of: $('#tabs')
+        }
+      });
+
+      //End mission drills
+
+      //systems autopopulate
+      var availableSystems= [
+       "NIPR",
+       "SIPR",
+       "SharePoint",
+       "CVA",
+       "Weather",
+       "GCCS",
+       "Intelink",
+       "ACAS",
+     ];
+     function split( val ) {
+       return val.split( /,\s*/ );
+     }
+     function extractLast( term ) {
+       return split( term ).pop();
+     }
+
+     $( "#systems" )
+       // don't navigate away from the field on tab when selecting an item
+       .on( "keydown", function( event ) {
+         if ( event.keyCode === $.ui.keyCode.TAB &&
+             $( this ).autocomplete( "instance" ).menu.active ) {
+           event.preventDefault();
+         }
+       })
+       .autocomplete({
+         minLength: 0,
+         source: function( request, response ) {
+           // delegate back to autocomplete, but extract the last term
+           response( $.ui.autocomplete.filter(
+             availableSystems, extractLast( request.term ) ) );
+         },
+         focus: function() {
+           // prevent value inserted on focus
+           return false;
+         },
+         select: function( event, ui ) {
+           var terms = split( this.value );
+           // remove the current input
+           terms.pop();
+           // add the selected item
+           terms.push( ui.item.value );
+           // add placeholder to get the comma-and-space at the end
+           terms.push( "" );
+           this.value = terms.join( ", " );
+           return false;
+         }
+       });
+
+    });//end ready
+
+
     </script>
     <style>
-    </style>
+    #add_system_btn {
+      float: right;
+    }
+    label, input { display:block; }
+    input.text { margin-bottom:12px; width:95%; padding: .4em; }
+    fieldset { padding:0; border:0; margin-top:25px; }
+  </style>
   </head>
   <body>
     <div id="header"></div>
-    <h2>Systems</h2>
+
+    <div id="dialog-form" title="Add new System">
+    <form>
+      <fieldset>
+        <label for="id">ID</label>
+        <input type="text" name="id" id="id" value="" class="text ui-widget-content ui-corner-all">
+        <label for="name">Name</label>
+        <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all">
+        <label for="type">Type</label>
+        <input type="text" name="type" id="type" value="" class="text ui-widget-content ui-corner-all">
+        <label for="organization">Organization</label>
+        <input type="text" name="organization" id="organization" value="" class="text ui-widget-content ui-corner-all">
+        <label for="systems">Systems</label>
+        <input name="systems" id="systems" size="50">
+        <!-- Allow form submission with keyboard without duplicating the dialog button -->
+        <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+      </fieldset>
+    </form>
+  </div>
+
+  <div id="mission_drill" title="Mission details">
+    <div id="m_id"></div>
+    <div id="m_status"></div>
+    <div id="m_name"></div>
+    <div id="m_type"></div>
+    <div id="m_organization"></div>
+    <div id="m_start"> </div>
+    <div id="m_end"> </div>
+    <div id="m_systems"> </div>
+    <!--<form>
+      <fieldset>
+        <label for="m_id">ID</label>
+        <input type="text" name="m_id" id="m_id" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_status">Current Status</label>
+        <input type="text" name="m_status" id="m_status" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_name">Name</label>
+        <input type="text" name="m_name" id="m_name" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_type">Type</label>
+        <input type="text" name="m_type" id="m_type" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_organization">Organization</label>
+        <input type="text" name="m_organization" id="m_organization" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_start">Start time</label>
+        <input type="datetime-local" name="m_start" id="m_start" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_end">End time</label>
+        <input type="datetime-local" name="m_end" id="m_end" value="" class="text ui-widget-content ui-corner-all">
+        <label for="m_systems">Systems Status</label>
+        <input type="textbox" name="m_systems" id="m_systems" value="" class="text ui-widget-content ui-corner-all">
+        <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+      </fieldset>
+    </form> -->
+  </div>
+  <div id="dependency_tree"></div>
+
+    <h1>Systems</h1>
+    <div id="tabs">
+    <ul>
+      <li><a href="#tabs-1">My Systems</a></li>
+      <li><a href="#tabs-3">Systems Map</a></li>
+      <button class="ui-button ui-widget ui-corner-all" id="add_system_btn">Add System</button>
+    </ul>
+    <div id="tabs-1">
+      <div id="system_table"></div>
+    </div>
+    <div id="tabs-3">
+      <form action="#">
+        <fieldset>
+          <label for="mission_selector">Select a mission to view</label>
+          <select name="mission_selector" id="mission_selector">
+            <option selected="selected">Take pictures</option>
+            <option>Drop bombs</option>
+            <option>Hack bad guys</option>
+          </select>
+        </fieldset>
+      </form>
+      <p>Pretty picture of selected mission</p>
+      <p>Should depict mission and show which systems it depends on and their status.</p>
+    </div>
+  </div>
   </body>
 </html>

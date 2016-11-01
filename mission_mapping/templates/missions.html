@@ -42,7 +42,25 @@
         $('#m_end').text("End Time : " + data.getValue(r, 5));
 
         $('#m_type').text('Mission type : ');
-        $('#m_systems').text('Systems: Show systems affected but show as a list of objects not text...');
+        $('#m_systems').html('<div id="systems_table"></div>');
+
+        sys_data = new google.visualization.DataTable();
+        sys_data.addColumn('number', 'Status');
+        sys_data.addColumn('string', 'System Name');
+        sys_data.addColumn('string', "Status description");
+
+        sys_data.addRows([
+          [85, "NIPR", "Bandwidth issues"],
+          [100, "ACAS", "Fully Operational"],
+          [25, "SharePoint", "Scheduled ASI"]
+        ])
+
+        sys_table = new google.visualization.Table(document.getElementById('systems_table'));
+        formatter = getColorFormatter();
+        formatter.format(sys_data, 0);
+        options = {showRowNumber: false,  allowHtml:true}
+
+        sys_table.draw(sys_data, options);
 
       }
 
@@ -99,7 +117,7 @@
 
       dialog = $( "#dialog-form" ).dialog({
         autoOpen: false,
-        height: 550,
+        height: 650,
         width: 450,
         modal: true,
         show: {
@@ -112,8 +130,8 @@
         },
         position: {
           my: "top",
-          at: "center",
-          of: $('#tabs')
+          at: "top",
+          of: window,
         },
         buttons: {
           "Add Mission": addMission,
@@ -171,44 +189,95 @@
         			events: [
         				{
         					title: 'All Day Mission',
-        					start: '2016-10-01'
+        					start: '2016-11-01'
         				},
         				{
         					title: 'Long Mission',
-        					start: '2016-10-07',
-        					end: '2016-10-10'
+        					start: '2016-11-07',
+        					end: '2016-11-10'
         				},
         				{
         					id: 999,
         					title: 'Repeating Mission',
-        					start: '2016-10-09T16:00:00'
+        					start: '2016-11-09T16:00:00'
         				},
         				{
         					id: 999,
         					title: 'Repeating Mission',
-        					start: '2016-10-16T16:00:00'
+        					start: '2016-11-16T16:00:00'
         				},
         				{
         					title: 'Conference',
-        					start: '2016-10-11',
-        					end: '2016-10-13'
+        					start: '2016-11-11',
+        					end: '2016-11-13'
         				},
         				{
         					title: 'Mission',
-        					start: '2016-10-12T10:30:00',
-        					end: '2016-10-12T12:30:00'
+        					start: '2016-11-12T10:30:00',
+        					end: '2016-11-12T12:30:00'
         				},
         				{
         					title: 'Mission',
-        					start: '2016-10-12T14:30:00'
+        					start: '2016-11-12T14:30:00'
         				},
         				{
         					title: 'Another Mission',
-        					start: '2016-10-13T07:00:00'
+        					start: '2016-11-13T07:00:00'
         				}
         			]
         });
       });
+
+      //end calendar
+      //systems autopopulate
+      var availableSystems= [
+       "NIPR",
+       "SIPR",
+       "SharePoint",
+       "CVA",
+       "Weather",
+       "GCCS",
+       "Intelink",
+       "ACAS",
+     ];
+     function split( val ) {
+       return val.split( /,\s*/ );
+     }
+     function extractLast( term ) {
+       return split( term ).pop();
+     }
+
+     $( "#systems" )
+       // don't navigate away from the field on tab when selecting an item
+       .on( "keydown", function( event ) {
+         if ( event.keyCode === $.ui.keyCode.TAB &&
+             $( this ).autocomplete( "instance" ).menu.active ) {
+           event.preventDefault();
+         }
+       })
+       .autocomplete({
+         minLength: 0,
+         source: function( request, response ) {
+           // delegate back to autocomplete, but extract the last term
+           response( $.ui.autocomplete.filter(
+             availableSystems, extractLast( request.term ) ) );
+         },
+         focus: function() {
+           // prevent value inserted on focus
+           return false;
+         },
+         select: function( event, ui ) {
+           var terms = split( this.value );
+           // remove the current input
+           terms.pop();
+           // add the selected item
+           terms.push( ui.item.value );
+           // add placeholder to get the comma-and-space at the end
+           terms.push( "" );
+           this.value = terms.join( ", " );
+           return false;
+         }
+       });
 
     });//end ready
 
@@ -241,6 +310,8 @@
         <input type="datetime-local" name="start" id="start" value="" class="text ui-widget-content ui-corner-all">
         <label for="end">End time</label>
         <input type="datetime-local" name="end" id="end" value="" class="text ui-widget-content ui-corner-all">
+        <label for="systems">Systems</label>
+        <input name="systems" id="systems" size="50">
         <!-- Allow form submission with keyboard without duplicating the dialog button -->
         <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
       </fieldset>
