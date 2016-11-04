@@ -12,6 +12,8 @@
 
     <script>
     var data;
+    var context = {{context|safe}};
+
     $( function() {
       $( "#header" ).load("/static/header.html");
       $( "#tabs" ).tabs();
@@ -24,21 +26,25 @@
       //var data;
       var table;
       var options;
+      var system_map = {};
+
+      var systems = context.systems;
 
       function getColorFormatter(){
         var formatter = new google.visualization.ColorFormat();
         formatter.addRange(100, null, '#83d974', '#83d974');
-        formatter.addRange(65, 99, '#ffc946', '#ffc946');
-        formatter.addRange(0, 64, '#f18a72', '#f18a72');
+        formatter.addRange(46, 99, '#ffc946', '#ffc946');
+        formatter.addRange(0, 45, '#f18a72', '#f18a72');
         return formatter;
       }
 
       function populateSystemDrill(r){
-        $('#s_id').text("ID : " + data.getValue(r, 1));
-        $('#s_status').text("System status : " + data.getValue(r, 0));
-        $('#s_name').text("System name : " + data.getValue(r, 2));
-        $('#s_organization').text("Organization : " + data.getValue(r, 3));
-        $('#s_type').text('Type : ');
+        s = system_map[data.getValue(r,1)];
+        $('#s_id').text(s.id);
+        $('#s_status').text(s.status_description);
+        $('#s_name').text(s.name);
+        $('#s_organization').text(s.organization);
+        $('#s_type').text(s.system_type);
         $('#s_systems').html('<div id="dependency_table"></div>');
 
         sys_data = new google.visualization.DataTable();
@@ -46,11 +52,16 @@
         sys_data.addColumn('string', 'System Name');
         sys_data.addColumn('string', "Status description");
 
-        sys_data.addRows([
-          [85, "Base Gateway", "bandwidth delays"],
-          [100, "Internal network", "up and running"],
-          [100, "DISA circuit", "up and running"]
-        ])
+        for(i=0; i < s.dependencies.length; i++){
+          d = s.dependencies[i];
+          sys_data.addRow([d.status, d.name, d.status_description])
+        }
+
+        //sys_data.addRows([
+        //  [85, "Base Gateway", "bandwidth delays"],
+        //  [100, "Internal network", "up and running"],
+        //  [100, "DISA circuit", "up and running"]
+        //])
 
         sys_table = new google.visualization.Table(document.getElementById('s_dependencies'));
         formatter = getColorFormatter();
@@ -66,12 +77,19 @@
         data.addColumn('number', 'Status');
         data.addColumn('string', 'ID');
         data.addColumn('string', 'System name');
-        data.addColumn('string', 'Organization')
-        data.addRows([
-          [100, 'S1','Intelink', 'Intel'],
-          [25, 'S2', 'GCCS', 'PMO'],
-          [75, 'S3', 'NIPR', '24 AF']
-        ]);
+        data.addColumn('string', 'Organization');
+        data.addColumn('string', 'Status description');
+        //data.addRows([
+        //  [100, 'S1','Intelink', 'Intel'],
+        //  [25, 'S2', 'GCCS', 'PMO'],
+        //  [75, 'S3', 'NIPR', '24 AF']
+        //]);
+
+        for(i=0; i<systems.length;i++){
+          s=systems[i];
+          system_map[String(s.id)] = s;
+          data.addRow([s.status, String(s.id), s.name, s.organization, s.status_description]);
+        }
 
         table = new google.visualization.Table(document.getElementById('system_table'));
         options = {showRowNumber: false, width: '100%', height:'100%', allowHtml:true}
@@ -96,10 +114,20 @@
 
       //what to do when you add mission
       function addSystem(){
-        data.addRow([100,
+        s = {};
+        s['status'] = parseInt($('#status').val());
+        s['id'] = String($('#id').val());
+        s['name'] = $('#name').val();
+        s['organization'] = $('#organization').val();
+        s['status_description'] = $('#status_description').val();
+        s['dependencies'] = [];
+        system_map[s['id']] = s;
+
+        data.addRow([parseInt($('#status').val()),
                      $('#id').val(),
                      $('#name').val(),
                      $('#organization').val(),
+                     $('#status_description').val(),
                    ]);
         formatter = getColorFormatter();
         formatter.format(data, 0);
@@ -226,9 +254,17 @@
     #add_system_btn {
       float: right;
     }
+    .s_label {
+      width:120px;
+      padding: 3px; }
+    .s_value {
+      float:right;
+      width: 65%
+      }
     label, input { display:block; }
     input.text { margin-bottom:12px; width:95%; padding: .4em; }
     fieldset { padding:0; border:0; margin-top:25px; }
+
   </style>
   </head>
   <body>
@@ -245,6 +281,14 @@
         <input type="text" name="type" id="type" value="" class="text ui-widget-content ui-corner-all">
         <label for="organization">Organization</label>
         <input type="text" name="organization" id="organization" value="" class="text ui-widget-content ui-corner-all">
+        <label for="status">Status</label>
+        <select name="status" id="status" lass="ui-widget-content ui-corner-all">
+          <option value="100" selected="selected">Fully operational</option>
+          <option value="50">Partially operational</option>
+          <option value="0">Non-Operational</option>
+        </select>
+        <label for="status_description">Status description</label>
+        <input type="text" name="status" id="status" value="" class="text ui-widget-content ui-corner-all">
         <label for="dependencies">Dependencies</label>
         <input name="dependencies" id="dependencies" size="50">
         <!-- Allow form submission with keyboard without duplicating the dialog button -->
@@ -254,11 +298,22 @@
   </div>
 
   <div id="system_drill" title="Mission details">
-    <div id="s_id"></div>
-    <div id="s_status"></div>
-    <div id="s_name"></div>
-    <div id="s_type"></div>
-    <div id="s_organization"></div>
+    <div class="s_value" id="s_id"></div>
+    <div class="s_label"><b>System ID</b></div>
+
+    <div class="s_value" id="s_status"></div>
+    <div class="s_label"><b>System Status</b></div>
+
+    <div class="s_value" id="s_name"></div>
+    <div class="s_label"><b>System name</b></div>
+
+    <div class="s_value" id="s_type"></div>
+    <div class="s_label"><b>System Type:</b></div>
+
+    <div class="s_value" id="s_organization"></div>
+    <div class="s_label"><b>Organization:</b></div>
+
+    <div class="s_label"><b>Dependencies:</b></div>
     <div id="s_dependencies"> </div>
   </div>
   <div id="dependency_tree"></div>
