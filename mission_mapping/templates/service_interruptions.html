@@ -26,6 +26,8 @@
       var current_asi_table;
       var pending_asi_data;
       var pending_asi_table;
+      var pending_responded_asi_table;
+      var pending_responded_asi_data;
       var options;
 
       var approved_asi_map = {};
@@ -89,7 +91,7 @@
         sys_data.addColumn('string', 'System Name');
         sys_data.addColumn('string', "System description");
 
-        //TODO Put dependency calculation here
+        //TODO Put mission dependency calculation here
         sys_data.addRow([null, null, null]);
 
         sys_table = new google.visualization.Table(document.getElementById('m_dependencies'));
@@ -104,7 +106,8 @@
         current_asi_data = new google.visualization.DataTable();
         current_asi_data.addColumn('string', 'ID');
         current_asi_data.addColumn('string', 'Systems');
-        current_asi_data.addColumn('string', 'Organization')
+        current_asi_data.addColumn('string', 'Organization');
+        current_asi_data.addColumn('string', 'Criticality');
         current_asi_data.addColumn('datetime', 'Start Time');
         current_asi_data.addColumn('datetime', 'End Time');
         //current_asi_data.addRows([
@@ -117,7 +120,7 @@
           asi = approved_asis[i];
           approved_asi_map[String(asi.id)] = asi;
 
-          current_asi_data.addRow([String(asi.id), asi.systems_text, asi.organization, new Date(asi.start_time), new Date(asi.end_time)]);
+          current_asi_data.addRow([String(asi.id), asi.systems_text, asi.organization, asi.criticality, new Date(asi.start_time), new Date(asi.end_time)]);
         }
 
         current_asi_table = new google.visualization.Table(document.getElementById('current_asi_table'));
@@ -135,7 +138,8 @@
         pending_asi_data = new google.visualization.DataTable();
         pending_asi_data.addColumn('string', 'ID');
         pending_asi_data.addColumn('string', 'Systems');
-        pending_asi_data.addColumn('string', 'Organization')
+        pending_asi_data.addColumn('string', 'Organization');
+        pending_asi_data.addColumn('string', 'Criticality');
         pending_asi_data.addColumn('datetime', 'Start Time');
         pending_asi_data.addColumn('datetime', 'End Time');
 
@@ -143,7 +147,7 @@
           asi = pending_asis[i];
           pending_asi_map[String(asi.id)] = asi;
 
-          pending_asi_data.addRow([String(asi.id), asi.systems_text, asi.organization, new Date(asi.start_time), new Date(asi.end_time)]);
+          pending_asi_data.addRow([String(asi.id), asi.systems_text, asi.organization, asi.criticality, new Date(asi.start_time), new Date(asi.end_time)]);
         }
 
         pending_asi_table = new google.visualization.Table(document.getElementById('pending_asi_table'));
@@ -153,6 +157,31 @@
         google.visualization.events.addListener(pending_asi_table, 'select', function(){
           s = pending_asi_table.getSelection();
           row = s[0].row;
+          populatePendingASIDrill(row);
+          $( "#asi_drill" ).dialog( "open" );
+        });
+
+        pending_responded_asi_data = new google.visualization.DataTable();
+        pending_responded_asi_data.addColumn('string', 'ID');
+        pending_responded_asi_data.addColumn('string', 'Systems');
+        pending_responded_asi_data.addColumn('string', 'Organization');
+        pending_responded_asi_data.addColumn('string', 'Criticality');
+        pending_responded_asi_data.addColumn('datetime', 'Start Time');
+        pending_responded_asi_data.addColumn('datetime', 'End Time');
+
+        //for(i=0; i < pending_asis.length; i++){
+        //  asi = pending_asis[i];
+        //  pending_asi_map[String(asi.id)] = asi;
+        //pending_asi_data.addRow([String(asi.id), asi.systems_text, asi.organization, asi.criticality, new Date(asi.start_time), new Date(asi.end_time)]);
+        //}
+
+        pending_responded_asi_table = new google.visualization.Table(document.getElementById('pending_responded_asi_table'));
+        options = {showRowNumber: true, width: '100%', height:'100%'}
+        pending_responded_asi_table.draw(pending_responded_asi_data, options);
+
+        google.visualization.events.addListener(pending_responded_asi_table, 'select', function(){
+          s = pending_responded_asi_table.getSelection();
+          row2 = s[0].row;
           populatePendingASIDrill(row);
           $( "#asi_drill" ).dialog( "open" );
         });
@@ -310,6 +339,7 @@
       float:right;
       width: 65%
       }
+    h2{ font-size:1.25em}
     label, input { display:block; }
     input.text { margin-bottom:12px; width:95%; padding: .4em; }
     fieldset { padding:0; border:0; margin-top:25px; }
@@ -381,6 +411,9 @@
     <div class="m_label"><b>Dependencies:</b></div>
     <div id="m_dependencies"> </div>
 
+    <label for="concur_reason"><b>ASI Response :</b></label>
+    <input type="text" name="concur_reason" id="concur_reason" value="" class="text ui-widget-content ui-corner-all">
+
     <button class="ui-button ui-widget ui-corner-all asi_btn" id="concur_btn">Concur</button>
     <button class="ui-button ui-widget ui-corner-all asi_btn" id="nonconcur_btn">Non-concur</button>
 
@@ -399,7 +432,10 @@
       <div id="current_asi_table"></div>
     </div>
     <div id="tabs-1.5">
+      <div><h2> Response needed ASIs</div>
       <div id="pending_asi_table"></div>
+      <div><h2>Responded to ASI</h2></div>
+      <div id="pending_responded_asi_table"></div>
     </div>
     <div id="tabs-2">
       <div id='calendar'></div>
