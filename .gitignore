@@ -1,6 +1,6 @@
 #project specific
-db.sqlite3
-mission_mapping/migrations/
+#db.sqlite3
+#mission_mapping/migrations/
 
 
 # Byte-compiled / optimized / DLL files

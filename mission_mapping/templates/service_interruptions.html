@@ -11,6 +11,8 @@
     <script type="text/javascript" src="/static/charts/loader.js"></script>
 
     <script>
+    var data;
+    var context = {{context|safe}};
     $( function() {
       $( "#header" ).load("/static/header.html");
       $( "#tabs" ).tabs();
@@ -20,52 +22,182 @@
       google.charts.load('current', {'packages':['table']});
       google.charts.setOnLoadCallback(drawTable);
 
-      var data;
-      var table;
+      var current_asi_data;
+      var current_asi_table;
+      var pending_asi_data;
+      var pending_asi_table;
       var options;
 
-      function drawTable() {
-        data = new google.visualization.DataTable();
-        data.addColumn('string', 'ID');
-        data.addColumn('string', 'Systems');
-        data.addColumn('string', 'Organization')
-        data.addColumn('datetime', 'Start Time');
-        data.addColumn('datetime', 'End Time');
-        data.addRows([
-          ['ASI2016-001','Intelink', '25 AF', new Date(2016, 9, 30, 12, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
-          ['ASI2016-002', 'Langley Gateway router', '83 NOS',  new Date(2016, 9, 30, 14, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
-          ['ASI2016-003', 'WP SharePoint', '24 AF',  new Date(2016, 9, 30, 15, 00, 00), new Date(2016, 9, 30, 23, 00, 00)]
-        ]);
+      var approved_asi_map = {};
+      var pending_asi_map = {};
 
-        table = new google.visualization.Table(document.getElementById('current_asi_table'));
-        options = {showRowNumber: true, width: '100%', height:'100%'}
-        table.draw(data, options);
+      var approved_asis = context.approved_asis;
+      var pending_asis = context.pending_asis;
+
+      function getColorFormatter(){
+        var formatter = new google.visualization.ColorFormat();
+        formatter.addRange(100, null, '#83d974', '#83d974');
+        formatter.addRange(46, 99, '#ffc946', '#ffc946');
+        formatter.addRange(0, 45, '#f18a72', '#f18a72');
+        return formatter;
       }
+
+      function populateApprovedASIDrill(r){
+        asi = approved_asi_map[current_asi_data.getValue(r, 0)];
+        $('#m_id').text(asi.id);
+        $('#m_description').text(asi.description);
+        $('#m_mission_impact').text(asi.mission_impact);
+        $('#m_criticality').text(asi.criticality);
+        $('#m_organization').text(asi.organization);
+        $('#m_poc').text(asi.poc);
+        $('#m_start').text(new Date(asi.start_time));
+        $('#m_end').text(new Date(asi.end_time));
+
+        $('#m_systems').text(asi.systems_text);
+
+        var sys_data = new google.visualization.DataTable();
+        sys_data.addColumn('number', 'Status')
+        sys_data.addColumn('string', 'System Name');
+        sys_data.addColumn('string', "System description");
+
+        //TODO Put dependency calculation here
+        sys_data.addRow([null, null, null]);
+
+        sys_table = new google.visualization.Table(document.getElementById('m_dependencies'));
+        formatter = getColorFormatter();
+        formatter.format(sys_data, 0);
+        options = {showRowNumber: false,  allowHtml:true}
+
+        sys_table.draw(sys_data, options);
+      }
+
+      function populatePendingASIDrill(r){
+        asi = pending_asi_map[pending_asi_data.getValue(r, 0)];
+        $('#m_id').text(asi.id);
+        $('#m_description').text(asi.description);
+        $('#m_mission_impact').text(asi.mission_impact);
+        $('#m_criticality').text(asi.criticality);
+        $('#m_organization').text(asi.organization);
+        $('#m_poc').text(asi.poc);
+        $('#m_start').text(new Date(asi.start_time));
+        $('#m_end').text(new Date(asi.end_time));
+
+        $('#m_systems').text(asi.systems_text);
+
+        var sys_data = new google.visualization.DataTable();
+        sys_data.addColumn('number', 'Status')
+        sys_data.addColumn('string', 'System Name');
+        sys_data.addColumn('string', "System description");
+
+        //TODO Put dependency calculation here
+        sys_data.addRow([null, null, null]);
+
+        sys_table = new google.visualization.Table(document.getElementById('m_dependencies'));
+        formatter = getColorFormatter();
+        formatter.format(sys_data, 0);
+        options = {showRowNumber: false,  allowHtml:true}
+
+        sys_table.draw(sys_data, options);
+      }
+
+      function drawTable() {
+        current_asi_data = new google.visualization.DataTable();
+        current_asi_data.addColumn('string', 'ID');
+        current_asi_data.addColumn('string', 'Systems');
+        current_asi_data.addColumn('string', 'Organization')
+        current_asi_data.addColumn('datetime', 'Start Time');
+        current_asi_data.addColumn('datetime', 'End Time');
+        //current_asi_data.addRows([
+        //  ['ASI2016-001','Intelink', '25 AF', new Date(2016, 9, 30, 12, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
+        //  ['ASI2016-002', 'Langley Gateway router', '83 NOS',  new Date(2016, 9, 30, 14, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
+        //  ['ASI2016-003', 'WP SharePoint', '24 AF',  new Date(2016, 9, 30, 15, 00, 00), new Date(2016, 9, 30, 23, 00, 00)]
+        //]);
+
+        for(i=0; i < approved_asis.length; i++){
+          asi = approved_asis[i];
+          approved_asi_map[String(asi.id)] = asi;
+
+          current_asi_data.addRow([String(asi.id), asi.systems_text, asi.organization, new Date(asi.start_time), new Date(asi.end_time)]);
+        }
+
+        current_asi_table = new google.visualization.Table(document.getElementById('current_asi_table'));
+        options = {showRowNumber: true, width: '100%', height:'100%'}
+        current_asi_table.draw(current_asi_data, options);
+
+        google.visualization.events.addListener(current_asi_table, 'select', function(){
+          s = current_asi_table.getSelection();
+          row = s[0].row;
+          populateApprovedASIDrill(row);
+          $( "#asi_drill" ).dialog( "open" );
+        });
+
+
+        pending_asi_data = new google.visualization.DataTable();
+        pending_asi_data.addColumn('string', 'ID');
+        pending_asi_data.addColumn('string', 'Systems');
+        pending_asi_data.addColumn('string', 'Organization')
+        pending_asi_data.addColumn('datetime', 'Start Time');
+        pending_asi_data.addColumn('datetime', 'End Time');
+
+        for(i=0; i < pending_asis.length; i++){
+          asi = pending_asis[i];
+          pending_asi_map[String(asi.id)] = asi;
+
+          pending_asi_data.addRow([String(asi.id), asi.systems_text, asi.organization, new Date(asi.start_time), new Date(asi.end_time)]);
+        }
+
+        pending_asi_table = new google.visualization.Table(document.getElementById('pending_asi_table'));
+        options = {showRowNumber: true, width: '100%', height:'100%'}
+        pending_asi_table.draw(pending_asi_data, options);
+
+        google.visualization.events.addListener(pending_asi_table, 'select', function(){
+          s = pending_asi_table.getSelection();
+          row = s[0].row;
+          populatePendingASIDrill(row);
+          $( "#asi_drill" ).dialog( "open" );
+        });
+      }
+
+
 
       //End create table
 
       //Create the add mission box
 
       //what to do when you add mission
-      function addMission(){
-        data.addRow([$('#asi_id').val(),
-                     $('#systems').val(),
-                     $('#organization').val(),
-                     new Date($('#start')[0].valueAsNumber),
-                     new Date($('#end')[0].valueAsNumber)
-                   ]);
-        table.draw(data, options);
+      function addASI(){
+        //current_asi_data.addRow([$('#asi_id').val(),
+        //             $('#systems').val(),
+        //             $('#organization').val(),
+        //             new Date($('#start')[0].valueAsNumber),
+        //             new Date($('#end')[0].valueAsNumber)
+        //           ]);
+        //current_asi_table.draw(current_asi_data, options);
+        alert("Your ASI request has been submitted to the ASI Managers for review");
         dialog.dialog("close");
         return true;
       }
 
       dialog = $( "#dialog-form" ).dialog({
         autoOpen: false,
-        height: 550,
+        height: 800,
         width: 450,
         modal: true,
+        show: {
+          effect: "fade",
+          duration: 500
+        },
+        hide: {
+          effect: "fade",
+          duration: 500
+        },
+        position: {
+          my: "top",
+          at: "top",
+          of: window,
+        },
         buttons: {
-          "Add ASI": addMission,
+          "Add ASI": addASI,
           Cancel: function() {
             dialog.dialog( "close" );
           }
@@ -77,13 +209,43 @@
 
       form = dialog.find( "form" ).on( "submit", function( event ) {
         event.preventDefault();
-        addMission();
+        addASI();
       });
 
       $( "#add_asi_btn" ).button().on( "click", function() {
         dialog.dialog( "open" );
       });
-      // End add mission box
+
+      $( "#concur_btn" ).button().on( "click", function() {
+        $( "#asi_drill" ).dialog( "close" );
+      });
+
+      $( "#nonconcur_btn" ).button().on( "click", function() {
+        $( "#asi_drill" ).dialog( "close" );
+      });
+
+      // End add asi box
+
+      //ASI drills
+      $( "#asi_drill" ).dialog({
+      autoOpen: false,
+        show: {
+          effect: "fold",
+          duration: 600
+        },
+        hide: {
+          effect: "fold",
+          duration: 600
+        },
+        width: "50%",
+        position: {
+          my: "top",
+          at: "center",
+          of: $('#tabs')
+        }
+      });
+
+      //End asi drills
 
       //calendar
       $("#tabs-2_link").click(function(){
@@ -98,41 +260,36 @@
         			eventLimit: true, // allow "more" link when too many events
         			events: [
         				{
-        					title: 'All Day Mission',
-        					start: '2016-10-01'
+        					title: 'All Day ASI',
+        					start: '2016-11-01'
         				},
         				{
-        					title: 'Long Mission',
-        					start: '2016-10-07',
-        					end: '2016-10-10'
-        				},
-        				{
-        					id: 999,
-        					title: 'Repeating Mission',
-        					start: '2016-10-09T16:00:00'
+        					title: 'Long ASI',
+        					start: '2016-11-07',
+        					end: '2016-11-10'
         				},
         				{
         					id: 999,
-        					title: 'Repeating Mission',
-        					start: '2016-10-16T16:00:00'
+        					title: 'Repeating ASI',
+        					start: '2016-11-09T16:00:00'
         				},
         				{
-        					title: 'Conference',
-        					start: '2016-10-11',
-        					end: '2016-10-13'
+        					id: 999,
+        					title: 'Repeating ASI',
+        					start: '2016-11-16T16:00:00'
         				},
         				{
-        					title: 'Mission',
-        					start: '2016-10-12T10:30:00',
-        					end: '2016-10-12T12:30:00'
+        					title: 'ASI',
+        					start: '2016-11-12T10:30:00',
+        					end: '2016-11-12T12:30:00'
         				},
         				{
-        					title: 'Mission',
-        					start: '2016-10-12T14:30:00'
+        					title: 'ASI',
+        					start: '2016-11-12T14:30:00'
         				},
         				{
-        					title: 'Another Mission',
-        					start: '2016-10-13T07:00:00'
+        					title: 'Another ASI',
+        					start: '2016-11-13T07:00:00'
         				}
         			]
         });
@@ -143,9 +300,16 @@
 
     </script>
     <style>
-    #add_asi_btn {
+    .asi_btn {
       float: right;
     }
+    .m_label {
+      width:120px;
+      padding: 3px; }
+    .m_value {
+      float:right;
+      width: 65%
+      }
     label, input { display:block; }
     input.text { margin-bottom:12px; width:95%; padding: .4em; }
     fieldset { padding:0; border:0; margin-top:25px; }
@@ -154,15 +318,27 @@
   <body>
     <div id="header"></div>
 
-    <div id="dialog-form" title="Add new ASI">
+    <div id="dialog-form" title="Request ASI">
     <form>
       <fieldset>
         <label for="asi_id">ID</label>
         <input type="text" name="asi_id" id="asi_id" value="" class="text ui-widget-content ui-corner-all">
         <label for="systems">Systems</label>
         <input type="text" name="systems" id="systems" value="" class="text ui-widget-content ui-corner-all">
+        <label for="description">Description</label>
+        <input type="text" name="description" id="description" value="" class="text ui-widget-content ui-corner-all">
+        <label for="mission_impact">Mission Impact</label>
+        <input type="text" name="mission_impact" id="mission_impact" value="" class="text ui-widget-content ui-corner-all">
+        <label for="criticality">Criticality</label>
+        <select name="criticality" id="criticality">
+          <option selected="selected">Low</option>
+          <option>Medium</option>
+          <option>High</option>
+        </select>
         <label for="organization">Organization</label>
         <input type="text" name="organization" id="organization" value="" class="text ui-widget-content ui-corner-all">
+        <label for="poc">POC</label>
+        <input type="text" name="poc" id="poc" value="" class="text ui-widget-content ui-corner-all">
         <label for="start">Start time</label>
         <input type="datetime-local" name="start" id="start" value="" class="text ui-widget-content ui-corner-all">
         <label for="end">End time</label>
@@ -174,14 +350,50 @@
     </form>
   </div>
 
+  <div id="asi_drill" title="Mission details">
+    <div class="m_value" id="m_id"></div>
+    <div class="m_label"><b>ASI ID:</b></div>
+
+    <div class="m_value" id="m_systems"></div>
+    <div class="m_label"><b>System:</b></div>
+
+    <div class="m_value" id="m_description"></div>
+    <div class="m_label"><b>Description:</b></div>
+
+    <div class="m_value" id="m_mission_impact"></div>
+    <div class="m_label"><b>Mission Impact:</b></div>
+
+    <div class="m_value" id="m_criticality"></div>
+    <div class="m_label"><b>Criticality</b></div>
+
+    <div class="m_value" id="m_organization"></div>
+    <div class="m_label"><b>Organization:</b></div>
+
+    <div class="m_value" id="m_poc"></div>
+    <div class="m_label"><b>POC:</b></div>
+
+    <div class="m_value" id="m_start"></div>
+    <div class="m_label"><b>Start time:</b></div>
+
+    <div class="m_value" id="m_end"></div>
+    <div class="m_label"><b>End time:</b></div>
+
+    <div class="m_label"><b>Dependencies:</b></div>
+    <div id="m_dependencies"> </div>
+
+    <button class="ui-button ui-widget ui-corner-all asi_btn" id="concur_btn">Concur</button>
+    <button class="ui-button ui-widget ui-corner-all asi_btn" id="nonconcur_btn">Non-concur</button>
+
+  </div>
+
     <h1>Service Interruptions</h1>
     <div id="tabs">
     <ul>
       <li><a href="#tabs-1">Approved ASIs</a></li>
       <li><a href="#tabs-1.5">Pending ASIs</a></li>
       <li><a id="tabs-2_link" href="#tabs-2">Upcoming ASIs</a></li>
-      <li><a href="#tabs-3">ASI Map</a></li>
-      <button class="ui-button ui-widget ui-corner-all" id="add_asi_btn">Add ASI</button>
+      <!--<li><a href="#tabs-3">ASI Map</a></li>-->
+      <button class="ui-button ui-widget ui-corner-all asi_btn"id="add_asi_btn">Request ASI</button>
     </ul>
     <div id="tabs-1">
       <div id="current_asi_table"></div>
@@ -192,7 +404,7 @@
     <div id="tabs-2">
       <div id='calendar'></div>
     </div>
-    <div id="tabs-3">
+    <!--<div id="tabs-3">
     <form action="#">
 
       <fieldset>
@@ -206,7 +418,7 @@
     </form>
       <p>Pretty picture of the selected ASI</p>
       <p>Should be able to view systems affected by ASI and their dependencies.</p>
-    </div>
+    </div>-->
   </div>
   </body>
 </html>

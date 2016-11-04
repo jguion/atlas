@@ -12,6 +12,8 @@
 
     <script>
     var data;
+    var context = {{context|safe}};
+
     $( function() {
       $( "#header" ).load("/static/header.html");
       $( "#tabs" ).tabs();
@@ -24,24 +26,28 @@
       //var data;
       var table;
       var options;
+      var mission_map = {};
+
+      var missions= context.missions;
 
       function getColorFormatter(){
         var formatter = new google.visualization.ColorFormat();
         formatter.addRange(100, null, '#83d974', '#83d974');
-        formatter.addRange(65, 99, '#ffc946', '#ffc946');
-        formatter.addRange(0, 64, '#f18a72', '#f18a72');
+        formatter.addRange(46, 99, '#ffc946', '#ffc946');
+        formatter.addRange(0, 45, '#f18a72', '#f18a72');
         return formatter;
       }
 
       function populateMissionDrill(r){
-        $('#m_id').text("ID : " + data.getValue(r, 1));
-        $('#m_status').text("Mission status percentage : " + data.getValue(r, 0));
-        $('#m_name').text("Mission name : " + data.getValue(r, 2));
-        $('#m_organization').text("Organization : " + data.getValue(r, 3));
-        $('#m_start').text("Start time : " + data.getValue(r, 4));
-        $('#m_end').text("End Time : " + data.getValue(r, 5));
+        m = mission_map[data.getValue(r, 1)];
+        $('#m_id').text(m.id);
+        $('#m_status').text(m.status);
+        $('#m_name').text(m.name);
+        $('#m_organization').text(m.organization);
+        $('#m_start').text(new Date(m.start_time));
+        $('#m_end').text(new Date(m.end_time));
 
-        $('#m_type').text('Mission type : ');
+        $('#m_type').text(m.mission_type);
         $('#m_systems').html('<div id="systems_table"></div>');
 
         sys_data = new google.visualization.DataTable();
@@ -49,11 +55,16 @@
         sys_data.addColumn('string', 'System Name');
         sys_data.addColumn('string', "Status description");
 
-        sys_data.addRows([
-          [85, "NIPR", "Bandwidth issues"],
-          [100, "ACAS", "Fully Operational"],
-          [25, "SharePoint", "Scheduled ASI"]
-        ])
+        for(i = 0; i < m.systems.length; i++){
+          s = m.systems[i];
+          sys_data.addRow([s.status, s.name, s.status_description]);
+        }
+
+        //sys_data.addRows([
+        //  [85, "NIPR", "Bandwidth issues"],
+        //  [100, "ACAS", "Fully Operational"],
+        //  [25, "SharePoint", "Scheduled ASI"]
+        //])
 
         sys_table = new google.visualization.Table(document.getElementById('systems_table'));
         formatter = getColorFormatter();
@@ -72,12 +83,16 @@
         data.addColumn('string', 'Organization')
         data.addColumn('datetime', 'Start Time');
         data.addColumn('datetime', 'End Time');
-        data.addRows([
-          [100, 'M1','Take pictures', 'Intel', new Date(2016, 9, 30, 12, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
-          [25, 'M2', 'Drop bombs', 'Bombers',  new Date(2016, 9, 30, 14, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
-          [75, 'M3', 'Hack bad guys', '24 AF',  new Date(2016, 9, 30, 15, 00, 00), new Date(2016, 9, 30, 23, 00, 00)]
-        ]);
-
+        //data.addRows([
+          //[100, 'M1','Take pictures', 'Intel', new Date(2016, 9, 30, 12, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
+          //[25, 'M2', 'Drop bombs', 'Bombers',  new Date(2016, 9, 30, 14, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
+          //[75, 'M3', 'Hack bad guys', '24 AF',  new Date(2016, 9, 30, 15, 00, 00), new Date(2016, 9, 30, 23, 00, 00)]
+        //]);
+        for (i=0; i < missions.length; i++){
+          m = missions[i];
+          mission_map[String(m.id)] = m;
+          data.addRow([m.status, String(m.id), m.name, m.organization, new Date(m.start_time), new Date(m.end_time)]);
+        }
         table = new google.visualization.Table(document.getElementById('current_mission_table'));
         options = {showRowNumber: false, width: '100%', height:'100%', allowHtml:true}
 
@@ -287,6 +302,13 @@
     #add_mission_btn {
       float: right;
     }
+    .m_label {
+      width:120px;
+      padding: 3px; }
+    .m_value {
+      float:right;
+      width: 65%
+      }
     label, input { display:block; }
     input.text { margin-bottom:12px; width:95%; padding: .4em; }
     fieldset { padding:0; border:0; margin-top:25px; }
@@ -303,7 +325,12 @@
         <label for="name">Name</label>
         <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all">
         <label for="type">Type</label>
-        <input type="text" name="type" id="type" value="" class="text ui-widget-content ui-corner-all">
+        <select name="type" id="type">
+          <option selected="selected">ISR</option>
+          <option>Global mobility</option>
+          <option>Global strike</option>
+          <option>Cyber Defense</option>
+        </select>
         <label for="organization">Organization</label>
         <input type="text" name="organization" id="organization" value="" class="text ui-widget-content ui-corner-all">
         <label for="start">Start time</label>
@@ -319,15 +346,29 @@
   </div>
 
   <div id="mission_drill" title="Mission details">
-    <div id="m_id"></div>
-    <div id="m_status"></div>
-    <div id="m_name"></div>
-    <div id="m_type"></div>
-    <div id="m_organization"></div>
-    <div id="m_start"> </div>
-    <div id="m_end"> </div>
-    <div id="m_systems"> </div>
+    <div class="m_value" id="m_id"></div>
+    <div class="m_label"><b>Mission ID</b></div>
 
+    <div class="m_value" id="m_status"></div>
+    <div class="m_label"><b>Mission Status</b></div>
+
+    <div class="m_value" id="m_name"></div>
+    <div class="m_label"><b>Mission name</b></div>
+
+    <div class="m_value" id="m_type"></div>
+    <div class="m_label"><b>Mission Type:</b></div>
+
+    <div class="m_value" id="m_organization"></div>
+    <div class="m_label"><b>Organization:</b></div>
+
+    <div class="m_value" id="m_start"></div>
+    <div class="m_label"><b>Start time:</b></div>
+
+    <div class="m_value" id="m_end"></div>
+    <div class="m_label"><b>End time:</b></div>
+
+    <div class="m_label"><b>Systems:</b></div>
+    <div id="m_systems"> </div>
     <!--<form>
       <fieldset>
         <label for="m_id">ID</label>
@@ -356,7 +397,7 @@
     <ul>
       <li><a href="#tabs-1">Today's Missions</a></li>
       <li><a id="tabs-2_link" href="#tabs-2">Upcoming Missions</a></li>
-      <li><a href="#tabs-3">Missions Map</a></li>
+      <!--<li><a href="#tabs-3">Missions Map</a></li>-->
       <button class="ui-button ui-widget ui-corner-all" id="add_mission_btn">Add Mission</button>
     </ul>
     <div id="tabs-1">
@@ -365,7 +406,7 @@
     <div id="tabs-2">
       <div id='calendar'></div>
     </div>
-    <div id="tabs-3">
+    <!--<div id="tabs-3">
       <form action="#">
         <fieldset>
           <label for="mission_selector">Select a mission to view</label>
@@ -378,7 +419,7 @@
       </form>
       <p>Pretty picture of selected mission</p>
       <p>Should depict mission and show which systems it depends on and their status.</p>
-    </div>
+    </div>-->
   </div>
   </body>
 </html>
