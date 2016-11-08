@@ -5,7 +5,7 @@ from . import views
 app_name = 'mission_mapping'
 urlpatterns = [
     # ex: /mission_mapping/
-    url(r'^$', views.dashboard, name='dashboard'),
+    url(r'^$', views.missions, name='missions'),
     url(r'^dashboard/$', views.dashboard, name='dashboard'),
     url(r'^missions/$', views.missions, name='missions'),
     url(r'^systems/$', views.systems, name='systems'),
