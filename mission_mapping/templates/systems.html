@@ -49,7 +49,7 @@
 
         sys_data = new google.visualization.DataTable();
         sys_data.addColumn('number', 'Status')
-        sys_data.addColumn('string', 'System Name');
+        sys_data.addColumn('string', 'Service Name');
         sys_data.addColumn('string', "Status description");
 
         for(i=0; i < s.dependencies.length; i++){
@@ -270,7 +270,7 @@
   <body>
     <div id="header"></div>
 
-    <div id="dialog-form" title="Add new System">
+    <div id="dialog-form" title="Add new service">
     <form>
       <fieldset>
         <label for="id">ID</label>
@@ -305,7 +305,7 @@
     <div class="s_label"><b>System Status</b></div>
 
     <div class="s_value" id="s_name"></div>
-    <div class="s_label"><b>System name</b></div>
+    <div class="s_label"><b>Service name</b></div>
 
     <div class="s_value" id="s_type"></div>
     <div class="s_label"><b>System Type:</b></div>
@@ -318,12 +318,12 @@
   </div>
   <div id="dependency_tree"></div>
 
-    <h1>Systems</h1>
+    <h1>Services</h1>
     <div id="tabs">
     <ul>
-      <li><a href="#tabs-1">My Systems</a></li>
+      <li><a href="#tabs-1">My Services</a></li>
       <li><a href="#tabs-3">Systems Map</a></li>
-      <button class="ui-button ui-widget ui-corner-all" id="add_system_btn">Add System</button>
+      <button class="ui-button ui-widget ui-corner-all" id="add_system_btn">Add Service</button>
     </ul>
     <div id="tabs-1">
       <div id="system_table"></div>

@@ -39,7 +39,6 @@ def missions(request):
             systems.append(s)
 
             mission_status = min(mission_status, system.status)
-        print systems
         m['systems'] = systems
         m['status'] = mission_status
 
