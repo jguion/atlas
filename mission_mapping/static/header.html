@@ -10,6 +10,12 @@
       $("#missions_link").click(function(){
         window.location.href = "/mission_mapping/missions/";
       })
+      $("#missions_link2").click(function(){
+        window.location.href = "/mission_mapping/missions/";
+      })
+      $("#mission_types_link").click(function(){
+        window.location.href = "/mission_mapping/mission_types/";
+      })
       $("#systems_link").click(function(){
         window.location.href = "/mission_mapping/systems/";
       })
@@ -37,6 +43,10 @@
       line-height: 0;
       height: 0;
   }
+  .missions_drop {
+    top: 40px !important;
+    left: 16px !important;
+  }
   .right{
     float:right !important;
   }
@@ -49,6 +59,10 @@
       </li>-->
       <li class="header-menu">
         <div id="missions_link">Missions</div>
+        <ul class="missions_drop">
+          <li><div id="missions_link2">View Missions</div></li>
+          <li><div id="mission_types_link">View Mission Types</div></li>
+        </ul>
       </li>
       <li class="header-menu">
         <div id="systems_link">Services</div>

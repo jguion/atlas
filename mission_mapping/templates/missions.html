@@ -27,6 +27,7 @@
       var table;
       var options;
       var mission_map = {};
+      var calendar_events = [];
 
       var missions= context.missions;
 
@@ -46,8 +47,10 @@
         $('#m_organization').text(m.organization);
         $('#m_start').text(new Date(m.start_time));
         $('#m_end').text(new Date(m.end_time));
-
         $('#m_type').text(m.mission_type);
+
+        $('#m_deptree').attr('href', "/mission_mapping/missions/"+m.id);
+
         $('#m_systems').html('<div id="systems_table"></div>');
 
         sys_data = new google.visualization.DataTable();
@@ -60,12 +63,6 @@
           sys_data.addRow([s.status, s.name, s.status_description]);
         }
 
-        //sys_data.addRows([
-        //  [85, "NIPR", "Bandwidth issues"],
-        //  [100, "ACAS", "Fully Operational"],
-        //  [25, "SharePoint", "Scheduled ASI"]
-        //])
-
         sys_table = new google.visualization.Table(document.getElementById('systems_table'));
         formatter = getColorFormatter();
         formatter.format(sys_data, 0);
@@ -77,7 +74,7 @@
 
       function drawTable() {
         data = new google.visualization.DataTable();
-        data.addColumn('number', 'Status');
+        data.addColumn('number', 'Risk');
         data.addColumn('string', 'ID');
         data.addColumn('string', 'Mission');
         data.addColumn('string', 'Organization')
@@ -92,6 +89,13 @@
           m = missions[i];
           mission_map[String(m.id)] = m;
           data.addRow([m.status, String(m.id), m.name, m.organization, new Date(m.start_time), new Date(m.end_time)]);
+
+          e = {
+            title: m.name,
+            start: new Date(m.start_time),
+            end: new Date(m.end_time),
+          }
+          calendar_events.push(e);
         }
         table = new google.visualization.Table(document.getElementById('current_mission_table'));
         options = {showRowNumber: false, width: '100%', height:'100%', allowHtml:true}
@@ -201,45 +205,7 @@
         			navLinks: true, // can click day/week names to navigate views
         			editable: false,
         			eventLimit: true, // allow "more" link when too many events
-        			events: [
-        				{
-        					title: 'All Day Mission',
-        					start: '2016-11-01'
-        				},
-        				{
-        					title: 'Long Mission',
-        					start: '2016-11-07',
-        					end: '2016-11-10'
-        				},
-        				{
-        					id: 999,
-        					title: 'Repeating Mission',
-        					start: '2016-11-09T16:00:00'
-        				},
-        				{
-        					id: 999,
-        					title: 'Repeating Mission',
-        					start: '2016-11-16T16:00:00'
-        				},
-        				{
-        					title: 'Conference',
-        					start: '2016-11-11',
-        					end: '2016-11-13'
-        				},
-        				{
-        					title: 'Mission',
-        					start: '2016-11-12T10:30:00',
-        					end: '2016-11-12T12:30:00'
-        				},
-        				{
-        					title: 'Mission',
-        					start: '2016-11-12T14:30:00'
-        				},
-        				{
-        					title: 'Another Mission',
-        					start: '2016-11-13T07:00:00'
-        				}
-        			]
+        			events: calendar_events,
         });
       });
 
@@ -367,6 +333,7 @@
     <div class="m_value" id="m_end"></div>
     <div class="m_label"><b>End time:</b></div>
 
+    <a class="m_value" id="m_deptree">View dependency tree</a>
     <div class="m_label"><b>Systems:</b></div>
     <div id="m_systems"> </div>
     <!--<form>

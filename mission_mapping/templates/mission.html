@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/jquery-ui-1.12.1.custom/jquery-ui.css" />
+    <link href="/static/vis/dist/vis.css" rel="stylesheet" type="text/css" />
+
+    <script type='text/javascript' src="/static/jquery-3.1.1.min.js"></script>
+    <script type='text/javascript' src="/static/jquery-ui-1.12.1.custom/jquery-ui.js"></script>
+    <script type="text/javascript" src="/static/charts/loader.js"></script>
+    <script src="/static/vis/dist/vis.js"></script>
+
+    <script>
+    var data;
+    var context = {{context|safe}};
+
+    $( function() {
+      $( "#header" ).load("/static/header.html");
+      google.charts.load('current', {'packages':['table']});
+
+      m = context.mission;
+      $('#m_id').text(m.id);
+      $('#m_status').text(m.status);
+      $('#m_name').text(m.name);
+      $('#m_organization').text(m.organization);
+      $('#m_start').text(new Date(m.start_time));
+      $('#m_end').text(new Date(m.end_time));
+
+      $('#m_type').text(m.mission_type);
+      $('#m_systems').html('<div id="systems_table"></div>');
+
+      /*sys_data = new google.visualization.DataTable();
+      sys_data.addColumn('number', 'Status');
+      sys_data.addColumn('string', 'System Name');
+      sys_data.addColumn('string', "Status description");
+
+      for(i = 0; i < m.systems.length; i++){
+        s = m.systems[i];
+        sys_data.addRow([s.status, s.name, s.status_description]);
+      }
+
+      sys_table = new google.visualization.Table(document.getElementById('systems_table'));
+      formatter = getColorFormatter();
+      formatter.format(sys_data, 0);
+      options = {showRowNumber: false,  allowHtml:true}
+
+      sys_table.draw(sys_data, options);*/
+
+
+    // create an array with nodes
+    var nodes = new vis.DataSet(m.nodes);
+
+    // create an array with edges
+    var edges = new vis.DataSet(m.edges);
+
+    // create a network
+    var container = document.getElementById('dependency_tree');
+    var data = {
+      nodes: nodes,
+      edges: edges,
+      hierarchical: true,
+    };
+    var options = {};
+    var network = new vis.Network(container, data, options);
+
+    });//end ready
+
+
+    </script>
+    <style>
+    #add_system_btn {
+      float: right;
+    }
+    .m_label {
+      float:left;
+      width:120px;
+       }
+    .m_value {
+      }
+    label, input { display:block; }
+    input.text { margin-bottom:12px; width:95%; padding: .4em; }
+    fieldset { padding:0; border:0; margin-top:25px; }
+
+    #dependency_tree {
+      width: 600px;
+      height: 400px;
+      border: 1px solid lightgray;
+    }
+
+  </style>
+  </head>
+  <body>
+    <div id="header"></div>
+
+    <h1>Mission</h1>
+
+  <div title="Mission details">
+    <div class="m_label"><b>Mission ID</b></div>
+    <div class="m_value" id="m_id"></div>
+
+    <div class="m_label"><b>Mission Status</b></div>
+    <div class="m_value" id="m_status"></div>
+
+    <div class="m_label"><b>Mission name</b></div>
+    <div class="m_value" id="m_name"></div>
+
+    <div class="m_label"><b>Mission Type:</b></div>
+    <div class="m_value" id="m_type"></div>
+
+    <div class="m_label"><b>Organization:</b></div>
+    <div class="m_value" id="m_organization"></div>
+
+    <div class="m_label"><b>Start time:</b></div>
+    <div class="m_value" id="m_start"></div>
+
+    <div class="m_label"><b>End time:</b></div>
+    <div class="m_value" id="m_end"></div>
+
+    <div id="m_systems"> </div>
+    <div class="m_label"><b>Systems:</b></div>
+  </div>
+  <br />
+  <div id="dependency_tree"></div>
+
+  </body>
+</html>

@@ -26,9 +26,9 @@
       //var data;
       var table;
       var options;
-      var system_map = {};
+      var mission_map = {};
 
-      var systems = context.systems;
+      var mission_types= context.mission_types;
 
       function getColorFormatter(){
         var formatter = new google.visualization.ColorFormat();
@@ -38,33 +38,25 @@
         return formatter;
       }
 
-      function populateSystemDrill(r){
-        s = system_map[data.getValue(r,1)];
-        $('#s_id').text(s.id);
-        $('#s_status').text(s.status_description);
-        $('#s_name').text(s.name);
-        $('#s_organization').text(s.organization);
-        $('#s_type').text(s.system_type);
-        $('#s_deptree').attr('href', "/mission_mapping/systems/"+s.id);
-        $('#s_systems').html('<div id="dependency_table"></div>');
+      function populateMissionDrill(r){
+        m = mission_map[data.getValue(r, 1)];
+        $('#m_id').text(m.id);
+        $('#m_status').text(m.status);
+        $('#m_name').text(m.name);
+        $('#m_organization').text(m.organization);
+        $('#m_systems').html('<div id="systems_table"></div>');
 
         sys_data = new google.visualization.DataTable();
-        sys_data.addColumn('number', 'Status')
-        sys_data.addColumn('string', 'Service Name');
+        sys_data.addColumn('number', 'Status');
+        sys_data.addColumn('string', 'System Name');
         sys_data.addColumn('string', "Status description");
 
-        for(i=0; i < s.dependencies.length; i++){
-          d = s.dependencies[i];
-          sys_data.addRow([d.status, d.name, d.status_description])
+        for(i = 0; i < m.systems.length; i++){
+          s = m.systems[i];
+          sys_data.addRow([s.status, s.name, s.status_description]);
         }
 
-        //sys_data.addRows([
-        //  [85, "Base Gateway", "bandwidth delays"],
-        //  [100, "Internal network", "up and running"],
-        //  [100, "DISA circuit", "up and running"]
-        //])
-
-        sys_table = new google.visualization.Table(document.getElementById('s_dependencies'));
+        sys_table = new google.visualization.Table(document.getElementById('systems_table'));
         formatter = getColorFormatter();
         formatter.format(sys_data, 0);
         options = {showRowNumber: false,  allowHtml:true}
@@ -77,22 +69,15 @@
         data = new google.visualization.DataTable();
         data.addColumn('number', 'Status');
         data.addColumn('string', 'ID');
-        data.addColumn('string', 'System name');
-        data.addColumn('string', 'Organization');
-        data.addColumn('string', 'Status description');
-        //data.addRows([
-        //  [100, 'S1','Intelink', 'Intel'],
-        //  [25, 'S2', 'GCCS', 'PMO'],
-        //  [75, 'S3', 'NIPR', '24 AF']
-        //]);
+        data.addColumn('string', 'Mission Type');
+        data.addColumn('string', 'Organization')
 
-        for(i=0; i<systems.length;i++){
-          s=systems[i];
-          system_map[String(s.id)] = s;
-          data.addRow([s.status, String(s.id), s.name, s.organization, s.status_description]);
+        for (i=0; i < mission_types.length; i++){
+          m = mission_types[i];
+          mission_map[String(m.id)] = m;
+          data.addRow([m.status, String(m.id), m.name, m.organization]);
         }
-
-        table = new google.visualization.Table(document.getElementById('system_table'));
+        table = new google.visualization.Table(document.getElementById('current_mission_table'));
         options = {showRowNumber: false, width: '100%', height:'100%', allowHtml:true}
 
         formatter = getColorFormatter();
@@ -103,8 +88,8 @@
         google.visualization.events.addListener(table, 'select', function(){
           s = table.getSelection();
           row = s[0].row;
-          populateSystemDrill(row);
-          $( "#system_drill" ).dialog( "open" );
+          populateMissionDrill(row);
+          $( "#mission_drill" ).dialog( "open" );
         });
 
       }
@@ -114,21 +99,11 @@
       //Create the add mission box
 
       //what to do when you add mission
-      function addSystem(){
-        s = {};
-        s['status'] = parseInt($('#status').val());
-        s['id'] = String($('#id').val());
-        s['name'] = $('#name').val();
-        s['organization'] = $('#organization').val();
-        s['status_description'] = $('#status_description').val();
-        s['dependencies'] = [];
-        system_map[s['id']] = s;
-
-        data.addRow([parseInt($('#status').val()),
+      function addMissionType(){
+        data.addRow([100,
                      $('#id').val(),
                      $('#name').val(),
                      $('#organization').val(),
-                     $('#status_description').val(),
                    ]);
         formatter = getColorFormatter();
         formatter.format(data, 0);
@@ -156,7 +131,7 @@
           of: window,
         },
         buttons: {
-          "Save Service": addSystem,
+          "Save Mission Type": addMissionType,
           Cancel: function() {
             dialog.dialog( "close" );
           }
@@ -168,16 +143,16 @@
 
       form = dialog.find( "form" ).on( "submit", function( event ) {
         event.preventDefault();
-        addSystem();
+        addMission();
       });
 
-      $( "#add_system_btn" ).button().on( "click", function() {
+      $( "#add_mission_btn" ).button().on( "click", function() {
         dialog.dialog( "open" );
       });
       // End add mission box
 
-      //System drills
-      $( "#system_drill" ).dialog({
+      //Mission drills
+      $( "#mission_drill" ).dialog({
       autoOpen: false,
         show: {
           effect: "fold",
@@ -197,6 +172,7 @@
 
       //End mission drills
 
+      //end calendar
       //systems autopopulate
       var availableSystems= [
        "NIPR",
@@ -215,7 +191,7 @@
        return split( term ).pop();
      }
 
-     $( "#dependencies" )
+     $( "#systems" )
        // don't navigate away from the field on tab when selecting an item
        .on( "keydown", function( event ) {
          if ( event.keyCode === $.ui.keyCode.TAB &&
@@ -252,97 +228,85 @@
 
     </script>
     <style>
-    #add_system_btn {
+    #add_mission_btn {
       float: right;
     }
-    .s_label {
+    .m_label {
       width:120px;
       padding: 3px; }
-    .s_value {
+    .m_value {
       float:right;
       width: 65%
       }
     label, input { display:block; }
     input.text { margin-bottom:12px; width:95%; padding: .4em; }
     fieldset { padding:0; border:0; margin-top:25px; }
-
   </style>
   </head>
   <body>
     <div id="header"></div>
 
-    <div id="dialog-form" title="Add new service">
+    <div id="dialog-form" title="Add new mission type">
     <form>
       <fieldset>
         <label for="id">ID</label>
         <input type="text" name="id" id="id" value="" class="text ui-widget-content ui-corner-all">
         <label for="name">Name</label>
         <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all">
-        <label for="type">Type</label>
-        <input type="text" name="type" id="type" value="" class="text ui-widget-content ui-corner-all">
         <label for="organization">Organization</label>
         <input type="text" name="organization" id="organization" value="" class="text ui-widget-content ui-corner-all">
-        <label for="status">Status</label>
-        <select name="status" id="status" lass="ui-widget-content ui-corner-all">
-          <option value="100" selected="selected">Fully operational</option>
-          <option value="50">Partially operational</option>
-          <option value="0">Non-Operational</option>
-        </select>
-        <label for="status_description">Status description</label>
-        <input type="text" name="status" id="status" value="" class="text ui-widget-content ui-corner-all">
-        <label for="dependencies">Dependencies</label>
-        <input name="dependencies" id="dependencies" size="50">
+        <label for="systems">Systems</label>
+        <input name="systems" id="systems" size="50">
         <!-- Allow form submission with keyboard without duplicating the dialog button -->
         <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
       </fieldset>
     </form>
   </div>
 
-  <div id="system_drill" title="Mission details">
-    <div class="s_value" id="s_id"></div>
-    <div class="s_label"><b>System ID</b></div>
+  <div id="mission_drill" title="Mission details">
+    <div class="m_value" id="m_id"></div>
+    <div class="m_label"><b>Mission ID</b></div>
 
-    <div class="s_value" id="s_status"></div>
-    <div class="s_label"><b>System Status</b></div>
+    <div class="m_value" id="m_status"></div>
+    <div class="m_label"><b>Mission Status</b></div>
 
-    <div class="s_value" id="s_name"></div>
-    <div class="s_label"><b>Service name</b></div>
+    <div class="m_value" id="m_name"></div>
+    <div class="m_label"><b>Mission name</b></div>
 
-    <div class="s_value" id="s_type"></div>
-    <div class="s_label"><b>System Type:</b></div>
+    <div class="m_value" id="m_organization"></div>
+    <div class="m_label"><b>Organization:</b></div>
 
-    <div class="s_value" id="s_organization"></div>
-    <div class="s_label"><b>Organization:</b></div>
+    <div class="m_label"><b>Systems:</b></div>
+    <div id="m_systems"> </div>
+</div>
 
-    <a class="s_value" id="s_deptree">View dependency tree</a>
-    <div class="s_label"><b>Dependencies:</b></div>
-    <div id="s_dependencies"> </div>
-  </div>
-  <div id="dependency_tree"></div>
-
-    <h1>Services</h1>
+    <h1>Mission Types</h1>
     <div id="tabs">
     <ul>
-      <li><a href="#tabs-1">My Services</a></li>
-      <!--<li><a href="#tabs-3">Systems Map</a></li>-->
-      <button class="ui-button ui-widget ui-corner-all" id="add_system_btn">Add Service</button>
+      <li><a href="#tabs-1">Mission Types</a></li>
+      <!--<li><a id="tabs-2_link" href="#tabs-2">Upcoming Missions</a></li>
+      <li><a href="#tabs-3">Missions Map</a></li>-->
+      <button class="ui-button ui-widget ui-corner-all" id="add_mission_btn">Add Mission Type</button>
     </ul>
     <div id="tabs-1">
-      <div id="system_table"></div>
+      <div id="current_mission_table"></div>
     </div>
-    <!--<div id="tabs-3">
+    <!--<div id="tabs-2">
+      <div id='calendar'></div>
+    </div>
+    <div id="tabs-3">
       <form action="#">
         <fieldset>
-          <label for="mission_selector">Select an enclave</label>
+          <label for="mission_selector">Select a mission to view</label>
           <select name="mission_selector" id="mission_selector">
-            <option selected="selected">WPAFB</option>
-            <option>Edwards AFB</option>
-            <option>NIPR</option>
+            <option selected="selected">Take pictures</option>
+            <option>Drop bombs</option>
+            <option>Hack bad guys</option>
           </select>
         </fieldset>
       </form>
       <p>Pretty picture of selected mission</p>
-      <p>Show map of systems in selected enclave?</p>
+      <p>Should depict mission and show which systems it depends on and their status.</p>
     </div>-->
   </div>
   </body>

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="/static/jquery-ui-1.12.1.custom/jquery-ui.css" />
+    <link href="/static/vis/dist/vis.css" rel="stylesheet" type="text/css" />
+
+    <script type='text/javascript' src="/static/jquery-3.1.1.min.js"></script>
+    <script type='text/javascript' src="/static/jquery-ui-1.12.1.custom/jquery-ui.js"></script>
+    <script type="text/javascript" src="/static/charts/loader.js"></script>
+    <script src="/static/vis/dist/vis.js"></script>
+
+    <script>
+    var data;
+    var context = {{context|safe}};
+
+    $( function() {
+      $( "#header" ).load("/static/header.html");
+
+      s = context.system;
+      $('#s_id').text(s.id);
+      $('#s_status').text(s.status_description);
+      $('#s_name').text(s.name);
+      $('#s_organization').text(s.organization);
+      $('#s_type').text(s.system_type);
+
+      var nodes = new vis.DataSet(s.nodes);
+
+      // create an array with edges
+      var edges = new vis.DataSet(s.edges);
+
+      // create a network
+      var container = document.getElementById('dependency_tree');
+      var data = {
+        nodes: nodes,
+        edges: edges
+      };
+      var options = {};
+      var network = new vis.Network(container, data, options);
+
+    });//end ready
+
+
+    </script>
+    <style>
+    #add_system_btn {
+      float: right;
+    }
+    .s_label {
+      float: left;
+      width:120px;
+     }
+    .s_value {
+      }
+    label, input { display:block; }
+    input.text { margin-bottom:12px; width:95%; padding: .4em; }
+    fieldset { padding:0; border:0; margin-top:25px; }
+
+    #dependency_tree {
+      width: 600px;
+      height: 400px;
+      border: 1px solid lightgray;
+    }
+
+  </style>
+  </head>
+  <body>
+    <div id="header"></div>
+
+    <h1>Services</h1>
+
+  <div title="Mission details">
+    <div class="s_label"><b>System ID</b></div>
+    <div class="s_value" id="s_id"></div>
+
+    <div class="s_label"><b>System Status</b></div>
+    <div class="s_value" id="s_status"></div>
+
+    <div class="s_label"><b>Service name</b></div>
+    <div class="s_value" id="s_name"></div>
+
+    <div class="s_label"><b>System Type:</b></div>
+    <div class="s_value" id="s_type"></div>
+
+    <div class="s_label"><b>Organization:</b></div>
+    <div class="s_value" id="s_organization"></div>
+
+    <div class="s_label"><b>Dependencies:</b></div>
+    <div id="s_dependencies"> </div>
+  </div>
+  <br />
+  <div id="dependency_tree"></div>
+
+  </body>
+</html>
