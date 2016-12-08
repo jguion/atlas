@@ -72,18 +72,24 @@
       float: right;
     }
     .m_label {
-      float:left;
-      width:120px;
-       }
+      font-size:1.1em;
+      font-family: Arial,Helvetica,sans-serif;
+      float: left;
+      width:130px;
+      margin:0px 2em 0px .4em
+     }
     .m_value {
+      font-size: 1.1em;
+      font-family: Arial,Helvetica,sans-serif;
+      padding: 4px;
       }
     label, input { display:block; }
     input.text { margin-bottom:12px; width:95%; padding: .4em; }
     fieldset { padding:0; border:0; margin-top:25px; }
 
     #dependency_tree {
-      width: 600px;
-      height: 400px;
+      width: 800px;
+      height: 600px;
       border: 1px solid lightgray;
     }
 
@@ -97,9 +103,6 @@
   <div title="Mission details">
     <div class="m_label"><b>Mission ID</b></div>
     <div class="m_value" id="m_id"></div>
-
-    <div class="m_label"><b>Mission Status</b></div>
-    <div class="m_value" id="m_status"></div>
 
     <div class="m_label"><b>Mission name</b></div>
     <div class="m_value" id="m_name"></div>
@@ -115,6 +118,9 @@
 
     <div class="m_label"><b>End time:</b></div>
     <div class="m_value" id="m_end"></div>
+
+    <div class="m_label"><b>Mission Status</b></div>
+    <div class="m_value" id="m_status"></div>
 
     <div id="m_systems"> </div>
     <div class="m_label"><b>Systems:</b></div>

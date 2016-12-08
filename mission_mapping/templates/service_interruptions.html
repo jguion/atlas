@@ -55,17 +55,18 @@
         $('#m_start').text(new Date(asi.start_time));
         $('#m_end').text(new Date(asi.end_time));
 
-        $('#m_systems').text(asi.systems_text);
-
         var sys_data = new google.visualization.DataTable();
-        sys_data.addColumn('number', 'Status')
+        sys_data.addColumn('number', 'Status');
         sys_data.addColumn('string', 'System Name');
-        sys_data.addColumn('string', "System description");
+        sys_data.addColumn('string', "Status description");
 
-        //TODO Put dependency calculation here
-        sys_data.addRow([null, null, null]);
+        for(i = 0; i < asi.systems.length; i++){
+          s = asi.systems[i];
+          sys_name_link = '<a href="/mission_mapping/systems/'+s.id+'">'+s.name+'</a>';
+          sys_data.addRow([s.status, s.name, s.status_description]);
+        }
 
-        sys_table = new google.visualization.Table(document.getElementById('m_dependencies'));
+        sys_table = new google.visualization.Table(document.getElementById('systems_table'));
         formatter = getColorFormatter();
         formatter.format(sys_data, 0);
         options = {showRowNumber: false,  allowHtml:true}
@@ -84,17 +85,19 @@
         $('#m_start').text(new Date(asi.start_time));
         $('#m_end').text(new Date(asi.end_time));
 
-        $('#m_systems').text(asi.systems_text);
-
         var sys_data = new google.visualization.DataTable();
-        sys_data.addColumn('number', 'Status')
+        sys_data.addColumn('number', 'Status');
         sys_data.addColumn('string', 'System Name');
-        sys_data.addColumn('string', "System description");
+        sys_data.addColumn('string', "Status description");
 
-        //TODO Put mission dependency calculation here
-        sys_data.addRow([null, null, null]);
+        for(i = 0; i < asi.systems.length; i++){
+          s = asi.systems[i];
+          sys_name_link = '<a href="/mission_mapping/systems/'+s.id+'">'+s.name+'</a>';
+          sys_data.addRow([s.status, s.name, s.status_description]);
+        }
+        $('#s_deptree').attr('href', "/mission_mapping/systems/"+s.id);
 
-        sys_table = new google.visualization.Table(document.getElementById('m_dependencies'));
+        sys_table = new google.visualization.Table(document.getElementById('systems_table'));
         formatter = getColorFormatter();
         formatter.format(sys_data, 0);
         options = {showRowNumber: false,  allowHtml:true}
@@ -409,7 +412,7 @@
     <div class="m_label"><b>End time:</b></div>
 
     <div class="m_label"><b>Dependencies:</b></div>
-    <div id="m_dependencies"> </div>
+    <div id="systems_table"> </div>
 
     <label for="concur_reason"><b>ASI Response :</b></label>
     <input type="text" name="concur_reason" id="concur_reason" value="" class="text ui-widget-content ui-corner-all">

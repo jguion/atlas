@@ -47,18 +47,24 @@
       float: right;
     }
     .s_label {
+      font-size:1.1em;
+      font-family: Arial,Helvetica,sans-serif;
       float: left;
-      width:120px;
+      width:130px;
+      margin:0px 2em 0px .4em
      }
     .s_value {
+      font-size: 1.1em;
+      font-family: Arial,Helvetica,sans-serif;
+      padding: 4px;
       }
     label, input { display:block; }
     input.text { margin-bottom:12px; width:95%; padding: .4em; }
     fieldset { padding:0; border:0; margin-top:25px; }
 
     #dependency_tree {
-      width: 600px;
-      height: 400px;
+      width: 800px;
+      height: 600px;
       border: 1px solid lightgray;
     }
 
@@ -73,9 +79,6 @@
     <div class="s_label"><b>System ID</b></div>
     <div class="s_value" id="s_id"></div>
 
-    <div class="s_label"><b>System Status</b></div>
-    <div class="s_value" id="s_status"></div>
-
     <div class="s_label"><b>Service name</b></div>
     <div class="s_value" id="s_name"></div>
 
@@ -84,6 +87,9 @@
 
     <div class="s_label"><b>Organization:</b></div>
     <div class="s_value" id="s_organization"></div>
+
+    <div class="s_label"><b>System Status</b></div>
+    <div class="s_value" id="s_status"></div>
 
     <div class="s_label"><b>Dependencies:</b></div>
     <div id="s_dependencies"> </div>
