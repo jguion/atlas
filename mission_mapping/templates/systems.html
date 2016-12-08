@@ -45,7 +45,7 @@
         $('#s_name').text(s.name);
         $('#s_organization').text(s.organization);
         $('#s_type').text(s.system_type);
-        $('#s_deptree').attr('href', "/mission_mapping/systems/"+s.id);
+        $('#s_deptree').attr('href', "/mission_mapping/services/"+s.id);
         $('#s_systems').html('<div id="dependency_table"></div>');
 
         sys_data = new google.visualization.DataTable();
