@@ -13,7 +13,8 @@ def dashboard(request):
     return render(request, "index.html", context)
 
 def missions(request):
-    mission_list = Mission.objects.all()
+    yesterday = datetime.date.today() - datetime.timedelta(days=1)
+    mission_list = Mission.objects.all().filter(end_time__gte=yesterday)
     #values("name", "description", "organization__name", "mission_type__name", "mission_type__systems", "start_time", "end_time", "systems")
     missions = []
     for mission in mission_list:
@@ -47,8 +48,10 @@ def missions(request):
 
         missions.append(m)
 
+    mission_types = list(MissionType.objects.values("id", "name"))
+
     dthandler = lambda obj: obj.isoformat() if isinstance(obj, datetime.date) else None
-    context = json.dumps({'missions': missions}, default=dthandler)
+    context = json.dumps({'missions': missions, "mission_types":mission_types}, default=dthandler)
     return render(request, "missions.html", {'context': context})
 
 def add_mission(request):
@@ -73,7 +76,6 @@ def mission(request, mission_id):
     nodes = [{
         'id': "M%s"%mission.id,
         'label': "*%s"%mission.name,
-        'level': 0,
     }]
     edges = []
     mission_status = 100
@@ -281,7 +283,8 @@ def system(request, system_id):
     return render(request, "system.html", {'context': context})
 
 def service_interruption(request):
-    asi_list = ServiceInterruption.objects.all()
+    yesterday = datetime.date.today() - datetime.timedelta(days=1)
+    asi_list = ServiceInterruption.objects.all().filter(end_time__gte=yesterday)
     approved_asis = []
     pending_asis = []
     for asi in asi_list:

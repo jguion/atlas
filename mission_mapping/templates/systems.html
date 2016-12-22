@@ -102,6 +102,7 @@
 
         google.visualization.events.addListener(table, 'select', function(){
           s = table.getSelection();
+          console.log(s);
           row = s[0].row;
           populateSystemDrill(row);
           $( "#system_drill" ).dialog( "open" );
@@ -187,7 +188,7 @@
           effect: "fold",
           duration: 600
         },
-        width: "50%",
+        width: "65%",
         position: {
           my: "top",
           at: "center",
@@ -195,7 +196,29 @@
         }
       });
 
-      //End mission drills
+      $( "#outage_dialog" ).dialog({
+      autoOpen: false,
+        show: {
+          effect: "fold",
+          duration: 600
+        },
+        hide: {
+          effect: "fold",
+          duration: 600
+        },
+        width: "65%",
+        position: {
+          my: "top",
+          at: "center",
+          of: $('#tabs')
+        }
+      });
+
+      $( "#report_outage_btn" ).button().on( "click", function() {
+        $( "#outage_dialog" ).dialog( "open" );
+      });
+
+      //End system drills
 
       //systems autopopulate
       var availableSystems= [
@@ -255,6 +278,9 @@
     #add_system_btn {
       float: right;
     }
+    #report_outage_btn {
+      float: right;
+    }
     .s_label {
       width:120px;
       padding: 3px; }
@@ -298,7 +324,7 @@
     </form>
   </div>
 
-  <div id="system_drill" title="Mission details">
+  <div id="system_drill" title="Service details">
     <div class="s_value" id="s_id"></div>
     <div class="s_label"><b>System ID</b></div>
 
@@ -318,6 +344,22 @@
     <div class="s_label"><b>Dependencies:</b></div>
     <div id="s_dependencies"> </div>
   </div>
+
+  <div id="outage_dialog" title="Report Outage">
+    <label for="outage_reason"><b>Outage description</b></label>
+    <input type="text" name="outage_reason" id="outage_reason" value="" class="text ui-widget-content ui-corner-all">
+    <label for="outage_status"><b>Service status</b></label>
+    <select name="outage_status" id="status" lass="ui-widget-content ui-corner-all">
+      <option value="100" selected="selected">Fully operational</option>
+      <option value="50">Partially operational</option>
+      <option value="0">Non-Operational</option>
+    </select>
+    <label for="end">Expected fix time</label>
+    <input type="datetime-local" name="end" id="end" value="" class="text ui-widget-content ui-corner-all">
+
+    <button class="ui-button ui-widget ui-corner-all asi_btn" id="outage_btn">Report Outage</button>
+    <button class="ui-button ui-widget ui-corner-all asi_btn" id="fix_btn">Mark as remediated</button>
+  </div>
   <div id="dependency_tree"></div>
 
     <h1>Services</h1>
@@ -326,6 +368,8 @@
       <li><a href="#tabs-1">My Services</a></li>
       <!--<li><a href="#tabs-3">Systems Map</a></li>-->
       <button class="ui-button ui-widget ui-corner-all" id="add_system_btn">Add Service</button>
+      <button class="ui-button ui-widget ui-corner-all" id="report_outage_btn">Report Outage</button>
+
     </ul>
     <div id="tabs-1">
       <div id="system_table"></div>

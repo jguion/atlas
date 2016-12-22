@@ -55,12 +55,22 @@
 
     // create a network
     var container = document.getElementById('dependency_tree');
+
     var data = {
       nodes: nodes,
       edges: edges,
-      hierarchical: true,
     };
-    var options = {};
+    var options = {
+        layout: {
+          hierarchical: {
+            sortMethod: "directed"
+          }
+        },
+        edges: {
+          smooth: true,
+          arrows: {to : true }
+        }
+      };
     var network = new vis.Network(container, data, options);
 
     });//end ready

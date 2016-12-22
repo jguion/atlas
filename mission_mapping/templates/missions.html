@@ -30,6 +30,7 @@
       var calendar_events = [];
 
       var missions= context.missions;
+      var mission_types = context.mission_types;
 
       function getColorFormatter(){
         var formatter = new google.visualization.ColorFormat();
@@ -80,11 +81,7 @@
         data.addColumn('string', 'Organization')
         data.addColumn('datetime', 'Start Time');
         data.addColumn('datetime', 'End Time');
-        //data.addRows([
-          //[100, 'M1','Take pictures', 'Intel', new Date(2016, 9, 30, 12, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
-          //[25, 'M2', 'Drop bombs', 'Bombers',  new Date(2016, 9, 30, 14, 00, 00), new Date(2016, 9, 30, 18, 00, 00)],
-          //[75, 'M3', 'Hack bad guys', '24 AF',  new Date(2016, 9, 30, 15, 00, 00), new Date(2016, 9, 30, 23, 00, 00)]
-        //]);
+
         for (i=0; i < missions.length; i++){
           m = missions[i];
           mission_map[String(m.id)] = m;
@@ -171,6 +168,14 @@
       $( "#add_mission_btn" ).button().on( "click", function() {
         dialog.dialog( "open" );
       });
+
+      //populate mission types drop down
+      mission_types.forEach(function(mt){
+        var option = '<option value="'+mt.id+'">'+mt.name+'</option>';
+        console.log(option);
+        $("#mission_types").append(option);
+      })
+
       // End add mission box
 
       //Mission drills
@@ -184,7 +189,7 @@
           effect: "fold",
           duration: 600
         },
-        width: "50%",
+        width: "65%",
         position: {
           my: "top",
           at: "center",
@@ -290,12 +295,8 @@
         <input type="text" name="id" id="id" value="" class="text ui-widget-content ui-corner-all">
         <label for="name">Name</label>
         <input type="text" name="name" id="name" value="" class="text ui-widget-content ui-corner-all">
-        <label for="type">Type</label>
-        <select name="type" id="type">
-          <option selected="selected">ISR</option>
-          <option>Global mobility</option>
-          <option>Global strike</option>
-          <option>Cyber Defense</option>
+        <label for="mission_types">Type</label>
+        <select name="mission_types" id="mission_types">
         </select>
         <label for="organization">Organization</label>
         <input type="text" name="organization" id="organization" value="" class="text ui-widget-content ui-corner-all">
