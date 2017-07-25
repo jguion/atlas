@@ -32,7 +32,7 @@
       var missions= context.missions;
       var mission_types = context.mission_types;
 
-      function getColorFormatter(){
+      function getSystemColorFormatter(){
         var formatter = new google.visualization.ColorFormat();
         formatter.addRange(100, null, '#83d974', '#83d974');
         formatter.addRange(46, 99, '#ffc946', '#ffc946');
@@ -40,10 +40,19 @@
         return formatter;
       }
 
+      function getMissionColorFormatter(){
+        var formatter = new google.visualization.ColorFormat();
+        formatter.addRange(0, 2, '#83d974', '#83d974');
+        formatter.addRange(2, 4, '#ffc946', '#ffc946');
+        formatter.addRange(4, null, '#f18a72', '#f18a72');
+        return formatter;
+      }
+
       function populateMissionDrill(r){
-        m = mission_map[data.getValue(r, 1)];
+        m = mission_map[data.getValue(r, 2)]; //Get Mission by ID at index 2
         $('#m_id').text(m.id);
-        $('#m_status').text(m.status);
+        $('#m_status').text(m.status_description);
+        $('#m_risk').text(m.risk_description);
         $('#m_name').text(m.name);
         $('#m_organization').text(m.organization);
         $('#m_start').text(new Date(m.start_time));
@@ -56,17 +65,21 @@
 
         sys_data = new google.visualization.DataTable();
         sys_data.addColumn('number', 'Status');
+        sys_data.addColumn('number', 'Risk');
         sys_data.addColumn('string', 'System Name');
+        sys_data.addColumn('string', 'Criticality');
         sys_data.addColumn('string', "Status description");
 
         for(i = 0; i < m.systems.length; i++){
           s = m.systems[i];
-          sys_data.addRow([s.status, s.name, s.status_description]);
+          sys_data.addRow([s.status, s.risk, s.name, s.criticality, s.status_description]);
         }
 
         sys_table = new google.visualization.Table(document.getElementById('systems_table'));
-        formatter = getColorFormatter();
+        formatter = getSystemColorFormatter();
         formatter.format(sys_data, 0);
+        m_formatter = getMissionColorFormatter();
+        m_formatter.format(sys_data, 1);
         options = {showRowNumber: false,  allowHtml:true}
 
         sys_table.draw(sys_data, options);
@@ -75,6 +88,7 @@
 
       function drawTable() {
         data = new google.visualization.DataTable();
+        data.addColumn('number', 'Status');
         data.addColumn('number', 'Risk');
         data.addColumn('string', 'ID');
         data.addColumn('string', 'Mission');
@@ -85,7 +99,7 @@
         for (i=0; i < missions.length; i++){
           m = missions[i];
           mission_map[String(m.id)] = m;
-          data.addRow([m.status, String(m.id), m.name, m.organization, new Date(m.start_time), new Date(m.end_time)]);
+          data.addRow([m.status, m.risk, String(m.id), m.name, m.organization, new Date(m.start_time), new Date(m.end_time)]);
 
           e = {
             title: m.name,
@@ -97,8 +111,9 @@
         table = new google.visualization.Table(document.getElementById('current_mission_table'));
         options = {showRowNumber: false, width: '100%', height:'100%', allowHtml:true}
 
-        formatter = getColorFormatter();
+        formatter = getMissionColorFormatter();
         formatter.format(data, 0);
+        formatter.format(data, 1);
 
         table.draw(data, options);
 
@@ -117,15 +132,17 @@
 
       //what to do when you add mission
       function addMission(){
-        data.addRow([100,
+        data.addRow([0,
+                     0,
                      $('#id').val(),
                      $('#name').val(),
                      $('#organization').val(),
                      new Date($('#start')[0].valueAsNumber),
                      new Date($('#end')[0].valueAsNumber)
                    ]);
-        formatter = getColorFormatter();
+        formatter = getMissionColorFormatter();
         formatter.format(data, 0);
+        formatter.format(data, 1);
         table.draw(data, options);
         dialog.dialog("close");
         return true;
@@ -318,6 +335,9 @@
 
     <div class="m_value" id="m_status"></div>
     <div class="m_label"><b>Mission Status</b></div>
+
+    <div class="m_value" id="m_risk"></div>
+    <div class="m_label"><b>Mission Risk</b></div>
 
     <div class="m_value" id="m_name"></div>
     <div class="m_label"><b>Mission name</b></div>

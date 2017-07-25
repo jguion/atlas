@@ -20,11 +20,24 @@ RISKS = (
     (0, "Unknown"),
 )
 
+IMPACT = (
+    (5, "Very High"),
+    (4, "High"),
+    (3, "Medium"),
+    (2, "Low"),
+    (1, "Very Low"),
+    (0, "None"),
+    (-1, "Unknown")
+)
+
 CRITICALITY = (
     ('H', "High"),
     ('M', "Medium"),
     ('L', "Low"),
+    ('N', "None")
 )
+
+
 
 class User(models.Model):
     name = models.CharField(max_length=200)
@@ -72,7 +85,6 @@ class System(models.Model):
         null=True
     )
     risk_description = models.CharField(max_length=400, default="", blank=True)
-    vulnerabilities = models.ManyToManyField("Vulnerability", blank=True)
 
     def __str__(self):
         return self.name
@@ -91,7 +103,7 @@ class Mission(models.Model):
     description = models.CharField(max_length=400, null=True, blank=True)
     organization = models.ForeignKey(Organization, null=True)
     poc = models.CharField(max_length=200, null=True, blank=True)
-    mission_type = models.ForeignKey(MissionType, null=True)
+    mission_type = models.ForeignKey(MissionType, null=True, blank=True)
     start_time = models.DateTimeField('start time', null=True)
     end_time = models.DateTimeField('end time', null=True)
     #cyber terrain
@@ -138,6 +150,10 @@ class MissionToMissionAssociation(models.Model):
         choices=RISKS,
         default=0
     )
+
+    def __str__(self):
+        return "parent: %s, child: %s"%(self.parent.name, self.child.name)
+
 class MissionToSystemAssociation(models.Model):
     parent = models.ForeignKey(Mission)
     child = models.ForeignKey(System)
@@ -145,6 +161,9 @@ class MissionToSystemAssociation(models.Model):
         choices=RISKS,
         default=0
     )
+    def __str__(self):
+        return "parent: %s, child: %s"%(self.parent.name, self.child.name)
+
 class SystemToSystemAssociation(models.Model):
     parent = models.ForeignKey(System, related_name='parent')
     child = models.ForeignKey(System, related_name='child')
@@ -152,6 +171,9 @@ class SystemToSystemAssociation(models.Model):
         choices=RISKS,
         default=0
     )
+
+    def __str__(self):
+        return "parent: %s, child: %s"%(self.parent.name, self.child.name)
 
 class CVE(models.Model):
     name = models.CharField(max_length=200)
@@ -166,13 +188,14 @@ class CVE(models.Model):
 
 class Vulnerability(models.Model):
     cve = models.ForeignKey(CVE)
+    system = models.ForeignKey(System, null=True)
     description = models.CharField(max_length=1000, null=True)
-    severity_score = models.DecimalField(max_digits=3, decimal_places=1, null=True)
-    impact_score = models.DecimalField(max_digits=3, decimal_places=1, null=True)
-    exploitability_score = models.DecimalField(max_digits=3, decimal_places=1, null=True)
+    severity_score = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    impact_score = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
+    exploitability_score = models.DecimalField(max_digits=3, decimal_places=1, null=True, blank=True)
 
     def __str__(self):
-        return self.cve
+        return "%s on %s"%(self.cve.name, self.system.name)
 
 class ThreatActor(models.Model):
     name = models.CharField(max_length=200)
@@ -194,8 +217,41 @@ class Threat(models.Model):
     def __str__(self):
         return self.name
 
-
-
+class CyberEvent(models.Model):
+    CYBER_EVENTS = (
+        (0, "Authorized Service Interruption"),
+        (1, "Unexpected Outage"),
+        (2, "Denial of Service"),
+        (3, "Root Level Breach"),
+        (4, "User Level Breach"),
+        (99, "Other")
+    )
+    type = models.IntegerField(
+            choices=CYBER_EVENTS,
+            null=True
+        )
+    system = models.ForeignKey(System)
+    description = models.CharField(max_length=1000, blank=True, null=True)
+    is_resolved = models.BooleanField(default=False)
+    start_time = models.DateTimeField('start time', null=True)
+    expected_end_time = models.DateTimeField('expected end time', null=True)
+    confidentiality_impact = models.IntegerField(
+            choices=IMPACT,
+            default=0,
+            null=True
+        )
+    integrity_impact = models.IntegerField(
+            choices=IMPACT,
+            default=0,
+            null=True
+        )
+    availability_impact = models.IntegerField(
+            choices=IMPACT,
+            default=0,
+            null=True
+        )
+    def __str__(self):
+        return "system: %s,time: %s,description %s "%(self.system.name, self.start_time, self.description)
 
 
 #class SystemStatus(models.Model):

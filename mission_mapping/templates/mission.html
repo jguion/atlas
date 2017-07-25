@@ -13,6 +13,7 @@
     <script>
     var data;
     var context = {{context|safe}};
+    var status = 1;
 
     $( function() {
       $( "#header" ).load("/static/header.html");
@@ -20,7 +21,7 @@
 
       m = context.mission;
       $('#m_id').text(m.id);
-      $('#m_status').text(m.status);
+      $('#m_status').text(m.status_description);
       $('#m_name').text(m.name);
       $('#m_organization').text(m.organization);
       $('#m_start').text(new Date(m.start_time));
@@ -46,7 +47,7 @@
 
       sys_table.draw(sys_data, options);*/
 
-
+    //STATUS TREE
     // create an array with nodes
     var nodes = new vis.DataSet(m.nodes);
 
@@ -73,6 +74,51 @@
       };
     var network = new vis.Network(container, data, options);
 
+    //RISK TREE
+    // create an array with nodes
+    nodes = new vis.DataSet(m.risk_nodes);
+
+    // create an array with edges
+    edges = new vis.DataSet(m.edges);
+
+    // create a network
+    container = document.getElementById('risk_tree');
+
+    data = {
+      nodes: nodes,
+      edges: edges,
+    };
+    options = {
+        layout: {
+          hierarchical: {
+            sortMethod: "directed"
+          }
+        },
+        edges: {
+          smooth: true,
+          arrows: {to : true }
+        }
+      };
+    network = new vis.Network(container, data, options);
+
+    $("#tabs").tabs();
+    //Toggle System Status / Risk
+    $("#toggle_status_risk_button").on("click", function(){
+      if(status == 1){
+        $("#dependency_tree").hide();
+        $("#risk_tree").show();
+        $("#status_risk_label").text("System Risk");
+        $("#toggle_status_risk_button").text("Show Status");
+        status = 0;
+      }else{
+        $("#risk_tree").hide();
+        $("#dependency_tree").show();
+        $("#status_risk_label").text("System Status");
+        $("#toggle_status_risk_button").text("Show Risk");
+        status = 1;
+      }
+    })
+
     });//end ready
 
 
@@ -98,6 +144,12 @@
     fieldset { padding:0; border:0; margin-top:25px; }
 
     #dependency_tree {
+      width: 800px;
+      height: 600px;
+      border: 1px solid lightgray;
+    }
+
+    #risk_tree {
       width: 800px;
       height: 600px;
       border: 1px solid lightgray;
@@ -133,10 +185,23 @@
     <div class="m_value" id="m_status"></div>
 
     <div id="m_systems"> </div>
-    <div class="m_label"><b>Systems:</b></div>
+    <div id="status_risk_label" class="m_label"><b>System Status</b>
+    </div>
+    <button id="toggle_status_risk_button" class="ui-state-default ui-corner-all">Show Risk</button>
   </div>
   <br />
-  <div id="dependency_tree"></div>
+  <div id="tabs">
+    <ul>
+      <li><a href="#status_tab">Status</a></li>
+      <li><a href="#risk_tab">Risk</a></li>
+    </ul>
+    <div id="status_tab">
+      <div id="dependency_tree"></div>
+    </div>
+    <div id="risk_tab">
+      <div id="risk_tree"></div>
+    </div>
+  </div>
 
   </body>
 </html>

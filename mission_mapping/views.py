@@ -27,10 +27,18 @@ def missions(request):
         m['start_time'] = mission.start_time
         m['end_time'] = mission.end_time
 
+        #captures criticality of system to mission
+        criticality_dict = {}
+        m['status'] = calculate_mission_impact(mission, criticality_dict)
+        m['status_description'] = "%s - Impact due to dependencies"%(IMPACT_LIST[m['status']])
+
+        m['risk'] = calculate_mission_risk(mission, criticality_dict)
+        m['risk_description'] = "%s - Risk due to dependencies"%(RISK_LIST[m['risk']])
+
         #Include the system if it is added to the mission or mission type
-        systems_set = mission.systems.all() | mission.mission_type.systems.all()
+        systems_set = mission.systems.all()
         systems = []
-        mission_status = 100
+        mission_risk = 0
         for system in systems_set:
             s = {}
             s['id'] = system.id
@@ -38,13 +46,13 @@ def missions(request):
             s['description'] = system.description
             s['system_type'] = system.system_type
             s['organization'] = system.organization.name
-            s['status'] = system.status
+            s['status'] = calculate_system_status(system)
             s['status_description'] = system.status_description
+            s['risk'] = calculate_system_risk(system)
+            s['criticality'] = IMPACT_LIST[criticality_dict[system.id]]
             systems.append(s)
 
-            mission_status = min(mission_status, system.status)
         m['systems'] = systems
-        m['status'] = mission_status
 
         missions.append(m)
 
@@ -70,15 +78,30 @@ def mission(request, mission_id):
     m['start_time'] = mission.start_time
     m['end_time'] = mission.end_time
 
+
+    criticality_dict = {}
+    m['status'] = calculate_mission_impact(mission, criticality_dict)
+    m['status_description'] = "%s - Impact due to dependencies"%(IMPACT_LIST[m['status']])
+
+    m['risk'] = calculate_mission_risk(mission, criticality_dict)
+    m['risk_description'] = "%s - Risk due to dependencies"%(RISK_LIST[m['risk']])
+
     #Include the system if it is added to the mission or mission type
-    systems_set = mission.systems.all() | mission.mission_type.systems.all()
+    systems_set = mission.systems.all()
     systems = []
     nodes = [{
         'id': "M%s"%mission.id,
         'label': "*%s"%mission.name,
+        'color': get_impact_color(m['status'])
+    }]
+
+    risk_nodes = [{
+        'id': "M%s"%mission.id,
+        'label': "*%s"%mission.name,
+        'color': get_impact_color(m['risk'])
     }]
     edges = []
-    mission_status = 100
+
     visited = set()
     dependencies = set()
     for system in systems_set:
@@ -88,17 +111,22 @@ def mission(request, mission_id):
         s['description'] = system.description
         s['system_type'] = system.system_type
         s['organization'] = system.organization.name
-        s['status'] = system.status
+        s['status'] = calculate_system_status(system)
         s['status_description'] = system.status_description
         systems.append(s)
 
         n = {}
         n['id'] = system.id
         n['label'] = system.name
-        n['color'] = get_node_color(system.status)
+        n['color'] = get_status_color(calculate_system_status(system))
 
         nodes.append(n)
         visited.add(system.id)
+
+        r = n.copy()
+
+        r['color'] = get_impact_color(calculate_system_risk(system))
+        risk_nodes.append(r)
 
         e = {}
         e['from'] = "M%s"%mission.id
@@ -110,9 +138,13 @@ def mission(request, mission_id):
                 n = {}
                 n['id'] = dep.id
                 n['label'] = dep.name
-                n['color'] = get_node_color(dep.status)
+                n['color'] = get_status_color(calculate_system_status(dep))
                 nodes.append(n)
                 visited.add(dep.id)
+
+                r = n.copy()
+                r['color'] = get_impact_color(calculate_system_risk(dep))
+                risk_nodes.append(r)
 
             e = {}
             e['from'] = system.id
@@ -126,9 +158,13 @@ def mission(request, mission_id):
                 n = {}
                 n['id'] = dep.id
                 n['label'] = dep.name
-                n['color'] = get_node_color(dep.status)
+                n['color'] = get_status_color(calculate_system_status(dep))
                 nodes.append(n)
                 visited.add(dep.id)
+
+                r = n.copy()
+                r['color'] = get_impact_color(calculate_system_risk(dep))
+                risk_nodes.append(r)
 
             for d2 in dep.dependencies.all():
                 e = {}
@@ -139,12 +175,10 @@ def mission(request, mission_id):
             dependencies = dependencies | set(dep.dependencies.all())
             dependencies = dependencies - visited
 
-        mission_status = min(mission_status, system.status)
-
     m['systems'] = systems
     m['nodes'] = nodes
+    m['risk_nodes'] = risk_nodes
     m['edges'] = edges
-    m['status'] = mission_status
 
     dthandler = lambda obj: obj.isoformat() if isinstance(obj, datetime.date) else None
     context = json.dumps({'mission': m}, default=dthandler)
@@ -246,7 +280,7 @@ def system(request, system_id):
         n = {}
         n['id'] = dep.id
         n['label'] = dep.name
-        n['color'] = get_node_color(dep.status)
+        n['color'] = get_status_color(dep.status)
         nodes.append(n)
         visited.add(dep.id)
 
@@ -262,7 +296,7 @@ def system(request, system_id):
             n = {}
             n['id'] = dep.id
             n['label'] = dep.name
-            n['color'] = get_node_color(dep.status)
+            n['color'] = get_status_color(dep.status)
             nodes.append(n)
             visited.add(dep.id)
 
