@@ -80,11 +80,37 @@ def mission(request, mission_id):
 
 
     criticality_dict = {}
-    m['status'] = calculate_mission_impact(mission, criticality_dict)
+    event_list = []
+    m['status'] = calculate_mission_impact(mission, criticality_dict, event_list)
     m['status_description'] = "%s - Impact due to dependencies"%(IMPACT_LIST[m['status']])
 
-    m['risk'] = calculate_mission_risk(mission, criticality_dict)
+    event_table = []
+    for (system, event) in event_list:
+        e = {}
+        e['system_name'] = system.name
+        e['event_name'] = event.description
+        e['type'] = event.type
+        e['confidentiality_impact'] = IMPACT_LIST[event.confidentiality_impact]
+        e['integrity_impact'] = IMPACT_LIST[event.integrity_impact]
+        e['availability_impact'] = IMPACT_LIST[event.availability_impact]
+        event_table.append(e)
+    m['event_table'] = event_table
+
+    threat_list = []
+    m['risk'] = calculate_mission_risk(mission, criticality_dict, threat_list)
     m['risk_description'] = "%s - Risk due to dependencies"%(RISK_LIST[m['risk']])
+
+    risk_table = []
+    for (threat, cve, system) in threat_list:
+        r = {}
+        r['threat_name'] = threat.name
+        r['threat_actor'] = threat.actor.name
+        r['targeted_vulnerability'] = cve.name
+        r['vulnerability_severity'] = float(cve.severity_score)
+        r['system_name'] = system.name
+        risk_table.append(r)
+    print risk_table
+    m['risk_table'] = risk_table
 
     #Include the system if it is added to the mission or mission type
     systems_set = mission.systems.all()

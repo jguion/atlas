@@ -11,17 +11,20 @@
     <script src="/static/vis/dist/vis.js"></script>
 
     <script>
-    var data;
+    var risk_table_data;
+    var event_table_data;
     var context = {{context|safe}};
     var status = 1;
 
     $( function() {
       $( "#header" ).load("/static/header.html");
       google.charts.load('current', {'packages':['table']});
+      google.charts.setOnLoadCallback(drawTable);
 
       m = context.mission;
       $('#m_id').text(m.id);
       $('#m_status').text(m.status_description);
+      $('#m_risk').text(m.risk_description);
       $('#m_name').text(m.name);
       $('#m_organization').text(m.organization);
       $('#m_start').text(new Date(m.start_time));
@@ -119,6 +122,59 @@
       }
     })
 
+    //Table
+    var risk_table = m.risk_table;
+    var event_table = m.event_table;
+
+    function drawTable() {
+      //Risk TABLE__________________
+      risk_table_data = new google.visualization.DataTable();
+      risk_table_data.addColumn('string', 'Threat');
+      risk_table_data.addColumn('string', 'Threat Actor');
+      risk_table_data.addColumn('string', 'Targeted Vulnerability');
+      risk_table_data.addColumn('number', 'Vulnerability Severity');
+      risk_table_data.addColumn('string', 'Potential Target System')
+
+      for (i=0; i < risk_table.length; i++){
+        r = risk_table[i];
+        risk_table_data.addRow([r.threat_name, r.threat_actor, r.targeted_vulnerability, r.vulnerability_severity, r.system_name]);
+      }
+
+      var table = new google.visualization.Table(document.getElementById('risk_table'));
+      var options = {showRowNumber: false, width: '100%', height:'100%', allowHtml:true}
+
+      //var formatter = getMissionColorFormatter();
+      //formatter.format(data, 0);
+      //formatter.format(data, 1);
+
+      table.draw(risk_table_data, options);
+
+      //________________EVENT TABLE__________________
+
+      event_table_data = new google.visualization.DataTable();
+      event_table_data.addColumn('string', 'System');
+      event_table_data.addColumn('string', 'Event');
+      event_table_data.addColumn('number', 'Event Type');
+      event_table_data.addColumn('string', 'Confidentiality Impact');
+      event_table_data.addColumn('string', 'Integrity Impact')
+      event_table_data.addColumn('string', 'Availability Impact')
+
+      for (i=0; i < event_table.length; i++){
+        e = event_table[i];
+        event_table_data.addRow([e.system_name, e.event_name, e.type, e.confidentiality_impact, e.integrity_impact, e.availability_impact]);
+      }
+
+      var e_table = new google.visualization.Table(document.getElementById('event_table'));
+
+      //var formatter = getMissionColorFormatter();
+      //formatter.format(data, 0);
+      //formatter.format(data, 1);
+
+      e_table.draw(event_table_data, options);
+
+
+    }
+
     });//end ready
 
 
@@ -184,6 +240,9 @@
     <div class="m_label"><b>Mission Status</b></div>
     <div class="m_value" id="m_status"></div>
 
+    <div class="m_label"><b>Mission Risk</b></div>
+    <div class="m_value" id="m_risk"></div>
+
     <div id="m_systems"> </div>
     <div id="status_risk_label" class="m_label"><b>System Status</b>
     </div>
@@ -192,16 +251,20 @@
   <br />
   <div id="tabs">
     <ul>
-      <li><a href="#status_tab">Status</a></li>
       <li><a href="#risk_tab">Risk</a></li>
+      <li><a href="#status_tab">Status</a></li>
     </ul>
-    <div id="status_tab">
-      <div id="dependency_tree"></div>
-    </div>
     <div id="risk_tab">
       <div id="risk_tree"></div>
+      <div id="risk_table"></div>
+    </div>
+    <div id="status_tab">
+      <div id="dependency_tree"></div>
+      <div id="event_table"></div>
     </div>
   </div>
+
+
 
   </body>
 </html>

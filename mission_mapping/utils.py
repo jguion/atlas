@@ -102,12 +102,13 @@ def impact_to_status_translation(impact):
         status = MINOR_DEGRADATION
     return status
 
-def get_system_status(system, events):
+def get_system_status(system, events, event_list=[]):
     if not events:
         return FULLY_OPERATIONAL
     impact_level = 0
     for event in events:
         impact_level = max(event.confidentiality_impact, event.integrity_impact, event.availability_impact)
+        event_list.append((system, event))
     return impact_to_status_translation(impact_level)
 
 def get_mission_impact(system_status, criticality):
@@ -122,24 +123,24 @@ def get_mission_impact(system_status, criticality):
 
     return MISSION_IMPACT_DICT[sys_index][criticality]
 
-def calculate_system_status(system):
+def calculate_system_status(system, event_list=[]):
     # system dependency status
     # system dependency mission impact
     cyber_events = CyberEvent.objects.all().filter(is_resolved=False, system=system)
-    system_status = get_system_status(system, cyber_events)
+    system_status = get_system_status(system, cyber_events, event_list)
     system_dependencies = system.dependencies.all()
     if not system_dependencies:
         return system_status
 
     for s in system_dependencies:
-        system_status = min(system_status, calculate_system_status(s))
+        system_status = min(system_status, calculate_system_status(s, event_list))
 
     return system_status
 
-def calculate_mission_impact(mission, criticality_dict):
+def calculate_mission_impact(mission, criticality_dict={}, event_list=[]):
     mission_impact = 0
     for system in mission.systems.all():
-        system_status = calculate_system_status(system)
+        system_status = calculate_system_status(system, event_list)
         relationship = MissionToSystemAssociation.objects.all().filter(parent=mission, child=system)
         criticality = relationship[0].criticality if relationship else NONE
         criticality_dict[system.id] = criticality
@@ -148,7 +149,7 @@ def calculate_mission_impact(mission, criticality_dict):
 
     return mission_impact
 
-def calculate_system_risk(system):
+def calculate_system_risk(system, threat_list=[]):
     sys_risk = system.risk if system.risk else 0
     vulnerabilities = Vulnerability.objects.all().filter(system=system)
     cve_list = [v.cve for v in vulnerabilities]
@@ -160,12 +161,15 @@ def calculate_system_risk(system):
     if threats:
         for threat in threats:
             for v in threat.targeted_vulnerabilities.all():
-                vulnerability_level = max(vulnerability_level, v.severity_score)
+                if v in cve_list:
+                    vulnerability_level = max(vulnerability_level, v.severity_score)
+                    threat_list.append((threat, v, system))
     elif cve_list:
-        vulnerability_level = max([cve.severity_score for cve in cve_list])
+        for cve in cve_list:
+            vulnerability_level = max(cve.severity_score)
+            threat_list.append((None, cve, system))
 
     risk_level = LIKELIHOOD_RISK_DICT[threat_level][int(math.ceil(vulnerability_level/2))]
-
     risk_level = max(sys_risk, risk_level)
 
     return risk_level
@@ -173,11 +177,13 @@ def calculate_system_risk(system):
 def get_mission_risk(likelihood, impact):
     return MISSION_RISK_DICT[likelihood][impact]
 
-def calculate_mission_risk(mission, criticality_dict):
+#criticality_dict[system] = criticality ; relationship of system to mission
+#threat_list (threat, CVE, system) ; used to build table of risks
+def calculate_mission_risk(mission, criticality_dict={}, threat_list=[]):
     mission_risk = 0
     recalc_criticalities = False if criticality_dict else True
     for system in mission.systems.all():
-        system_risk = calculate_system_risk(system)
+        system_risk = calculate_system_risk(system, threat_list)
         if recalc_criticalities:
             relationship = MissionToSystemAssociation.objects.all().filter(parent=mission, child=system)
             criticality = relationship[0].criticality if relationship else NONE
